@@ -1,6 +1,6 @@
 import type { SpotifyTrack, SpotifyAuthResponse, AudioFeatures } from '../types/spotify'
 
-// Spotify API configuration using Vite environment variables
+// Spotify API configuration
 export const SPOTIFY_CONFIG = {
   CLIENT_ID: import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'your_spotify_client_id',
   REDIRECT_URI: import.meta.env.VITE_SPOTIFY_REDIRECT_URI || window.location.origin + '/callback',
@@ -9,9 +9,7 @@ export const SPOTIFY_CONFIG = {
     'user-read-email',
     'user-read-private',
     'user-read-playback-state',
-    'user-modify-playback-state',
-    'user-read-currently-playing',
-    'user-read-recently-played'
+    'user-modify-playback-state'
   ].join(' ')
 }
 
