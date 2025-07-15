@@ -6,7 +6,7 @@ import { MusicPlayer } from './components/player/MusicPlayer'
 function App() {
   return (
     <PlayerProvider>
-      <Router>
+      <Router basename="/by-defeat">
         <div className="min-h-screen bg-gray-900 text-white">
           <Routes>
             <Route path="/" element={<HomePage />} />
