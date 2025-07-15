@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PlayerProvider } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
+import { useEffect } from 'react'
 
 function App() {
   return (
@@ -93,13 +94,46 @@ const AboutPage = () => (
   </div>
 )
 
-const CallbackPage = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
-      <p className="text-lg">Processing authentication...</p>
+const CallbackPage = () => {
+  useEffect(() => {
+    const handleCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get('code')
+      const error = urlParams.get('error')
+      
+      if (error) {
+        console.error('Spotify auth error:', error)
+        // Redirect back to main page with error
+        window.location.href = '/by-defeat/?error=' + error
+        return
+      }
+      
+      if (code) {
+        try {
+          // Here you would exchange the code for an access token
+          console.log('Got auth code:', code)
+          
+          // For now, just redirect back to main page
+          // In a real app, you'd exchange the code for a token first
+          window.location.href = '/by-defeat/?authenticated=true'
+        } catch (err) {
+          console.error('Token exchange failed:', err)
+          window.location.href = '/by-defeat/?error=token_exchange_failed'
+        }
+      }
+    }
+    
+    handleCallback()
+  }, [])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
+        <p className="text-lg">Processing authentication...</p>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 export default App

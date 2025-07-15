@@ -14,9 +14,9 @@ export const SPOTIFY_CONFIG = {
 }
 
 // Generate auth URL with PKCE
-export const generateAuthUrl = () => {
+export const generateAuthUrl = async () => {
   const codeVerifier = generateCodeVerifier()
-  const codeChallenge = generateCodeChallenge(codeVerifier)
+  const codeChallenge = await generateCodeChallenge(codeVerifier)
   
   // Store code verifier for later use
   localStorage.setItem('spotify_code_verifier', codeVerifier)
@@ -31,21 +31,20 @@ export const generateAuthUrl = () => {
 }
 
 // Helper functions for PKCE
-function generateCodeVerifier() {
+function generateCodeVerifier(): string {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
   return base64URLEncode(array)
 }
 
-function generateCodeChallenge(verifier: string) {
+async function generateCodeChallenge(verifier: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(verifier)
-  return crypto.subtle.digest('SHA-256', data).then(buffer => {
-    return base64URLEncode(new Uint8Array(buffer))
-  })
+  const buffer = await crypto.subtle.digest('SHA-256', data)
+  return base64URLEncode(new Uint8Array(buffer))
 }
 
-function base64URLEncode(buffer: Uint8Array) {
+function base64URLEncode(buffer: Uint8Array): string {
   return btoa(String.fromCharCode(...buffer))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')

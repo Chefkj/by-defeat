@@ -11,7 +11,7 @@ export const SpotifyAuth: React.FC<SpotifyAuthProps> = ({ onAuthSuccess }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSpotifyAuth = () => {
+  const handleSpotifyAuth = async () => {
     setIsLoading(true)
     setError(null)
     
@@ -21,7 +21,7 @@ export const SpotifyAuth: React.FC<SpotifyAuthProps> = ({ onAuthSuccess }) => {
         throw new Error('Spotify Client ID not configured')
       }
       
-      const authUrl = generateAuthUrl()
+      const authUrl = await generateAuthUrl()
       
       // Validate the URL was generated
       if (!authUrl || !authUrl.includes('accounts.spotify.com')) {
