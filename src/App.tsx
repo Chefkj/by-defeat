@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { PlayerProvider } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
 import { useEffect, useState } from 'react'
-import { exchangeCodeForToken } from './services/spotify'
+import { exchangeCodeForToken, generateAuthUrl } from './services/spotify'
 
 function App() {
   return (
@@ -24,6 +24,16 @@ function App() {
 
 const HomePage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  const handleSpotifyConnect = async () => {
+    try {
+      const authUrl = await generateAuthUrl()
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Failed to generate auth URL:', error)
+      alert('Failed to start authentication process')
+    }
+  }
 
   useEffect(() => {
     // Check if user just authenticated
@@ -98,13 +108,19 @@ const HomePage = () => {
               <p className="text-gray-400">
                 React 19 + Vite + TypeScript + Tailwind CSS + Framer Motion + React Router
               </p>
-              <div className="mt-6">
+              <div className="mt-6 space-x-4">
                 <Link 
                   to="/music" 
                   className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
                 >
                   Experience the Music Player
                 </Link>
+                <button 
+                  onClick={handleSpotifyConnect}
+                  className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+                >
+                  Connect with Spotify
+                </button>
               </div>
             </div>
           )}
@@ -234,6 +250,15 @@ const CallbackPage = () => {
         }
         
         if (code) {
+          // Debug: Check if code verifier exists
+          const codeVerifier = localStorage.getItem('spotify_code_verifier')
+          console.log('Code verifier found:', !!codeVerifier)
+          console.log('All localStorage keys:', Object.keys(localStorage))
+          
+          if (!codeVerifier) {
+            throw new Error('Code verifier not found in localStorage - auth flow was interrupted')
+          }
+          
           console.log('Exchanging code for token...')
           const tokens = await exchangeCodeForToken(code)
           console.log('Token exchange successful!')
@@ -257,7 +282,7 @@ const CallbackPage = () => {
         }
       } catch (err) {
         console.error('Token exchange failed:', err)
-        setError('Failed to complete authentication')
+        setError(`Failed to complete authentication: ${err instanceof Error ? err.message : 'Unknown error'}`)
         setIsLoading(false)
         clearTimeout(timeoutId)
       }

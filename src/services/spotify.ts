@@ -41,8 +41,16 @@ export const generateAuthUrl = async (): Promise<string> => {
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = await generateCodeChallenge(codeVerifier)
   
-  // Store code verifier for later use
+  // Store code verifier with a timestamp and extra logging
+  console.log('Storing code verifier:', codeVerifier.substring(0, 10) + '...')
   localStorage.setItem('spotify_code_verifier', codeVerifier)
+  localStorage.setItem('spotify_code_verifier_timestamp', Date.now().toString())
+  
+  // Verify it was stored
+  const stored = localStorage.getItem('spotify_code_verifier')
+  if (!stored) {
+    throw new Error('Failed to store code verifier')
+  }
   
   return `https://accounts.spotify.com/authorize?` +
     `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
@@ -56,9 +64,26 @@ export const generateAuthUrl = async (): Promise<string> => {
 // Exchange auth code for access token
 export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthResponse> => {
   const codeVerifier = localStorage.getItem('spotify_code_verifier')
+  const timestamp = localStorage.getItem('spotify_code_verifier_timestamp')
+  
+  console.log('Code verifier check:', {
+    exists: !!codeVerifier,
+    timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : 'none',
+    age: timestamp ? Date.now() - parseInt(timestamp) : 'unknown'
+  })
   
   if (!codeVerifier) {
-    throw new Error('Code verifier not found')
+    // List all localStorage keys for debugging
+    const allKeys = Object.keys(localStorage)
+    console.error('localStorage keys:', allKeys)
+    throw new Error('Code verifier not found - please restart the authentication process')
+  }
+
+  // Check if code verifier is too old (older than 10 minutes)
+  if (timestamp && Date.now() - parseInt(timestamp) > 600000) {
+    localStorage.removeItem('spotify_code_verifier')
+    localStorage.removeItem('spotify_code_verifier_timestamp')
+    throw new Error('Code verifier expired - please restart the authentication process')
   }
 
   const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -76,7 +101,9 @@ export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthRes
   })
 
   if (!response.ok) {
-    throw new Error('Failed to exchange code for token')
+    const errorData = await response.json().catch(() => ({}))
+    console.error('Token exchange failed:', errorData)
+    throw new Error(`Failed to exchange code for token: ${response.status} ${response.statusText}`)
   }
 
   const data = await response.json()
@@ -86,8 +113,9 @@ export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthRes
   localStorage.setItem('spotify_refresh_token', data.refresh_token)
   localStorage.setItem('spotify_token_expires_at', (Date.now() + data.expires_in * 1000).toString())
   
-  // Clean up
+  // Clean up code verifier
   localStorage.removeItem('spotify_code_verifier')
+  localStorage.removeItem('spotify_code_verifier_timestamp')
   
   return data
 }
