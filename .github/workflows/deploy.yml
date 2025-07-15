@@ -29,12 +29,11 @@ jobs:
         rm -rf node_modules package-lock.json
         npm cache clean --force
         npm install --legacy-peer-deps
-        npm install @rollup/rollup-linux-x64-gnu --no-optional
         
     - name: Verify build tools
       run: |
-        npx rollup --version
         npx vite --version
+        ls -la node_modules/.bin/
         
     - name: Build
       run: npm run build
