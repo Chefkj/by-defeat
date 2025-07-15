@@ -268,7 +268,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     const initializeAudio = () => {
       try {
         if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+          audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
         }
         
         if (!analyserRef.current) {
@@ -293,6 +293,8 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
         }
       } catch (error) {
         console.log('Audio context not available, using mock data')
+        // Handle the error appropriately
+        console.error('Audio context initialization failed:', error)
       }
     }
 
