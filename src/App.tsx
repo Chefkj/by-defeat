@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { PlayerProvider } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
 import { useEffect, useState } from 'react'
+import { exchangeCodeForToken } from './services/spotify'
 
 function App() {
   return (
@@ -204,41 +205,109 @@ const AboutPage = () => (
   </div>
 )
 
+import { usePlayer } from './contexts/PlayerContext'
+
 const CallbackPage = () => {
+  const { authenticate } = usePlayer()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     const handleCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const code = urlParams.get('code')
-      const error = urlParams.get('error')
-      
-      if (error) {
-        console.error('Spotify auth error:', error)
-        window.location.href = '/by-defeat/?error=' + error
-        return
-      }
-      
-      if (code) {
-        try {
-          console.log('Got auth code:', code)
-          localStorage.setItem('spotify_auth_code', code)
-          // Redirect directly to the music player after successful auth
-          window.location.href = '/by-defeat/music?authenticated=true'
-        } catch (err) {
-          console.error('Token exchange failed:', err)
-          window.location.href = '/by-defeat/?error=token_exchange_failed'
+      // Set a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setError('Authentication timeout - please try again')
+        setIsLoading(false)
+      }, 30000) // 30 second timeout
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search)
+        const code = urlParams.get('code')
+        const error = urlParams.get('error')
+        
+        if (error) {
+          console.error('Spotify auth error:', error)
+          setError('Authentication failed: ' + error)
+          setIsLoading(false)
+          clearTimeout(timeoutId)
+          return
         }
+        
+        if (code) {
+          console.log('Exchanging code for token...')
+          const tokens = await exchangeCodeForToken(code)
+          console.log('Token exchange successful!')
+          
+          if (tokens.access_token) {
+            authenticate(tokens.access_token)
+            localStorage.setItem('spotify_auth_code', code)
+            
+            // Clear timeout before redirect
+            clearTimeout(timeoutId)
+            
+            // Redirect to music player
+            window.location.href = '/by-defeat/music?authenticated=true'
+          } else {
+            throw new Error('No access token received')
+          }
+        } else {
+          setError('No authorization code received')
+          setIsLoading(false)
+          clearTimeout(timeoutId)
+        }
+      } catch (err) {
+        console.error('Token exchange failed:', err)
+        setError('Failed to complete authentication')
+        setIsLoading(false)
+        clearTimeout(timeoutId)
       }
     }
     
     handleCallback()
-  }, [])
+  }, [authenticate])
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">❌ Authentication Error</div>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <Link 
+            to="/" 
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          >
+            Try Again
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state while processing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
+          <p className="text-lg text-white">Processing authentication...</p>
+          <p className="text-gray-400 mt-2">Exchanging code for access token...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // This should never be reached, but just in case
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4 mx-auto"></div>
-        <p className="text-lg text-white">Processing authentication...</p>
-        <p className="text-gray-400 mt-2">Redirecting to music player...</p>
+        <div className="text-yellow-500 text-xl mb-4">⚠️ Unexpected State</div>
+        <p className="text-gray-400 mb-4">Something went wrong during authentication</p>
+        <Link 
+          to="/" 
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+        >
+          Go Home
+        </Link>
       </div>
     </div>
   )

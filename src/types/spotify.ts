@@ -1,20 +1,24 @@
 export interface SpotifyTrack {
   id: string
   name: string
-  artist: string // Simple string for compatibility
-  artists?: Array<{ name: string }> // Optional array for full Spotify API
-  album?: string // Album name as string
-  albumObject?: { // Optional full album object
+  artist: string
+  artists: Array<{ name: string; id: string }>  // Add this line
+  album?: string
+  albumObject?: {  // Add this full object
     name: string
     images: Array<{ url: string }>
+    id: string
   }
-  duration_ms?: number
+  duration_ms: number
   preview_url: string | null
-  external_urls: {
+  image?: string
+  coverArt?: string
+  external_urls?: {
     spotify: string
   }
-  image?: string // Cover art URL
-  coverArt?: string // Alias for image
+  uri: string
+  popularity?: number
+  explicit?: boolean
 }
 
 export interface SpotifyArtist {
@@ -62,6 +66,18 @@ export interface PlayerState {
   currentIndex: number
   isAuthenticated: boolean
   accessToken: string | null
+  userProfile: UserProfile | null
+  tracks: SpotifyTrack[]
+  isLoading: boolean
+  error: string | null
+}
+
+export interface UserProfile {
+  display_name: string
+  images: Array<{ url: string }>
+  followers: { total: number }
+  id: string
+  email: string
 }
 
 export interface AudioFeatures {
