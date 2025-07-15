@@ -94,6 +94,7 @@ const HomePage = () => {
                 <button 
                   onClick={() => {
                     localStorage.removeItem('spotify_auth_code')
+                    localStorage.removeItem('code_verifier')
                     setIsAuthenticated(false)
                   }}
                   className="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition-colors"
@@ -134,74 +135,9 @@ const HomePage = () => {
 }
 
 const MusicPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    // Check if user just authenticated or has existing auth
-    const urlParams = new URLSearchParams(window.location.search)
-    const authenticated = urlParams.get('authenticated')
-    const code = localStorage.getItem('spotify_auth_code')
-    
-    if ((authenticated === 'true' && code) || code) {
-      setIsAuthenticated(true)
-      
-      // Clean up the URL if there's a query parameter
-      if (authenticated === 'true') {
-        window.history.replaceState({}, document.title, '/by-defeat/music')
-      }
-    }
-  }, [])
-
   return (
     <div className="min-h-screen">
-      <main className="p-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-2xl font-semibold mb-4">Music Player</h2>
-          
-          {isAuthenticated ? (
-            <div className="space-y-4">
-              <div className="bg-green-500/20 border border-green-500 text-green-200 px-4 py-3 rounded">
-                ✅ Connected to Spotify - Ready to play!
-              </div>
-              <p>Interactive music experience with Spotify integration</p>
-              <div className="flex gap-4">
-                <Link 
-                  to="/" 
-                  className="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-                >
-                  Back to Home
-                </Link>
-                <button 
-                  onClick={() => {
-                    localStorage.removeItem('spotify_auth_code')
-                    setIsAuthenticated(false)
-                  }}
-                  className="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-                >
-                  Disconnect
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p>Connect to Spotify to access the full music experience</p>
-              <Link 
-                to="/" 
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-              >
-                Connect to Spotify
-              </Link>
-            </div>
-          )}
-        </motion.div>
-      </main>
-      
-      {/* Show the music player only if authenticated */}
-      {isAuthenticated && <MusicPlayer />}
+      <MusicPlayer />
     </div>
   )
 }
@@ -250,15 +186,6 @@ const CallbackPage = () => {
         }
         
         if (code) {
-          // Debug: Check if code verifier exists
-          const codeVerifier = localStorage.getItem('spotify_code_verifier')
-          console.log('Code verifier found:', !!codeVerifier)
-          console.log('All localStorage keys:', Object.keys(localStorage))
-          
-          if (!codeVerifier) {
-            throw new Error('Code verifier not found in localStorage - auth flow was interrupted')
-          }
-          
           console.log('Exchanging code for token...')
           const tokens = await exchangeCodeForToken(code)
           console.log('Token exchange successful!')

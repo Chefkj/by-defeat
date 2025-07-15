@@ -256,6 +256,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     localStorage.removeItem('spotify_access_token')
     localStorage.removeItem('spotify_refresh_token')
     localStorage.removeItem('spotify_auth_code')
+    localStorage.removeItem('code_verifier')
     dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: false, accessToken: null } })
     dispatch({ type: 'SET_USER_PROFILE', payload: null })
     dispatch({ type: 'SET_USER_TRACKS', payload: [] })

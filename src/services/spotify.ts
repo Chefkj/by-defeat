@@ -16,7 +16,7 @@ export const SPOTIFY_CONFIG = {
 }
 
 // Helper functions for PKCE
-function generateCodeVerifier(): string {
+export function generateCodeVerifier(): string {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
   return base64URLEncode(array)
@@ -113,7 +113,7 @@ export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthRes
   localStorage.setItem('spotify_refresh_token', data.refresh_token)
   localStorage.setItem('spotify_token_expires_at', (Date.now() + data.expires_in * 1000).toString())
   
-  // Clean up code verifier
+  // Clean up code verifier and timestamp
   localStorage.removeItem('spotify_code_verifier')
   localStorage.removeItem('spotify_code_verifier_timestamp')
   
@@ -181,7 +181,7 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
   if (!token) {
     try {
       token = await refreshAccessToken()
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Authentication required')
     }
   }
@@ -242,7 +242,7 @@ export const getCurrentPlayback = async () => {
 
 // Start/Resume playback
 export const startPlayback = async (deviceId?: string, uris?: string[]) => {
-  const body: any = {}
+  const body: Record<string, string | string[]> = {}
   
   if (deviceId) {
     body.device_id = deviceId
