@@ -3,7 +3,7 @@ import type { SpotifyTrack, SpotifyAuthResponse, AudioFeatures } from '../types/
 // Spotify API configuration
 export const SPOTIFY_CONFIG = {
   CLIENT_ID: import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'your_spotify_client_id',
-  REDIRECT_URI: import.meta.env.VITE_SPOTIFY_REDIRECT_URI || window.location.origin + '/callback',
+  REDIRECT_URI: import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'https://chefkj.github.io/by-defeat/callback',
   SCOPES: [
     'streaming',
     'user-read-email',
@@ -13,14 +13,11 @@ export const SPOTIFY_CONFIG = {
   ].join(' ')
 }
 
-const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID
-const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'https://chefkj.github.io/by-defeat/callback'
-
-// In your auth URL generation:
+// Generate auth URL
 export const SPOTIFY_AUTH_URL = `https://accounts.spotify.com/authorize?` +
-  `client_id=${CLIENT_ID}&` +
+  `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
   `response_type=code&` +
-  `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+  `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
   `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}`
 
 // Reference track ID from the issue
