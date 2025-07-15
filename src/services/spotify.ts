@@ -13,23 +13,6 @@ export const SPOTIFY_CONFIG = {
   ].join(' ')
 }
 
-// Generate auth URL with PKCE
-export const generateAuthUrl = async () => {
-  const codeVerifier = generateCodeVerifier()
-  const codeChallenge = await generateCodeChallenge(codeVerifier)
-  
-  // Store code verifier for later use
-  localStorage.setItem('spotify_code_verifier', codeVerifier)
-  
-  return `https://accounts.spotify.com/authorize?` +
-    `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
-    `response_type=code&` +
-    `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
-    `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}&` +
-    `code_challenge=${codeChallenge}&` +
-    `code_challenge_method=S256`
-}
-
 // Helper functions for PKCE
 function generateCodeVerifier(): string {
   const array = new Uint8Array(32)
@@ -49,6 +32,23 @@ function base64URLEncode(buffer: Uint8Array): string {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '')
+}
+
+// Generate auth URL with PKCE - THIS IS THE KEY FIX
+export const generateAuthUrl = async (): Promise<string> => {
+  const codeVerifier = generateCodeVerifier()
+  const codeChallenge = await generateCodeChallenge(codeVerifier)
+  
+  // Store code verifier for later use
+  localStorage.setItem('spotify_code_verifier', codeVerifier)
+  
+  return `https://accounts.spotify.com/authorize?` +
+    `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
+    `response_type=code&` +
+    `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
+    `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}&` +
+    `code_challenge=${codeChallenge}&` +
+    `code_challenge_method=S256`
 }
 
 // Reference track ID from the issue
