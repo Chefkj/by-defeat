@@ -190,7 +190,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       try {
         const userTracks = await getUserTracks(10)
         dispatch({ type: 'SET_USER_TRACKS', payload: userTracks.items.map((item: any) => item.track) })
-      } catch (error) {
+      } catch {
         console.log('Could not load user saved tracks')
         dispatch({ type: 'SET_USER_TRACKS', payload: [] })
       }
@@ -202,7 +202,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
           dispatch({ type: 'SET_CURRENT_TRACK', payload: playbackState.item })
           dispatch({ type: 'SET_PLAYING', payload: playbackState.is_playing })
         }
-      } catch (playbackError) {
+      } catch {
         console.log('No active playback session')
       }
       
