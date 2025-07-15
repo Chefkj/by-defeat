@@ -14,6 +14,20 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://chefkj.github.io/by-defeat/" />
     
+    <!-- Single Page Apps for GitHub Pages -->
+    <script type="text/javascript">
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    
     <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,20 +81,6 @@
         pointer-events: none;
       }
     </style>
-    
-    <!-- Single Page Apps for GitHub Pages -->
-    <script type="text/javascript">
-      (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          );
-        }
-      }(window.location))
-    </script>
   </head>
   <body>
     <!-- Loading screen -->
@@ -94,7 +94,7 @@
     <!-- Spotify Web Playback SDK -->
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     
-    <!-- Define the Spotify SDK callback BEFORE loading the React app -->
+    <!-- Define the Spotify SDK callback -->
     <script>
       window.onSpotifyWebPlaybackSDKReady = () => {
         console.log('Spotify Web Playback SDK is ready');
