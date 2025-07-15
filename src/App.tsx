@@ -84,6 +84,7 @@ const HomePage = () => {
                 <button 
                   onClick={() => {
                     localStorage.removeItem('spotify_auth_code')
+                    localStorage.removeItem('code_verifier')
                     setIsAuthenticated(false)
                   }}
                   className="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition-colors"
@@ -162,6 +163,7 @@ const MusicPage = () => {
                 <button 
                   onClick={() => {
                     localStorage.removeItem('spotify_auth_code')
+                    localStorage.removeItem('code_verifier')
                     setIsAuthenticated(false)
                   }}
                   className="inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
@@ -235,7 +237,11 @@ const CallbackPage = () => {
         
         if (code) {
           console.log('Exchanging code for token...')
-          const tokens = await exchangeCodeForToken(code)
+          const codeVerifier = localStorage.getItem('code_verifier')
+          if (!codeVerifier) {
+            throw new Error('Code verifier not found in localStorage')
+          }
+          const tokens = await exchangeCodeForToken(code, codeVerifier)
           console.log('Token exchange successful!')
           
           if (tokens.access_token) {

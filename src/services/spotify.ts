@@ -16,7 +16,7 @@ export const SPOTIFY_CONFIG = {
 }
 
 // Helper functions for PKCE
-function generateCodeVerifier(): string {
+export function generateCodeVerifier(): string {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
   return base64URLEncode(array)
@@ -42,7 +42,7 @@ export const generateAuthUrl = async (): Promise<string> => {
   const codeChallenge = await generateCodeChallenge(codeVerifier)
   
   // Store code verifier for later use
-  localStorage.setItem('spotify_code_verifier', codeVerifier)
+  localStorage.setItem('code_verifier', codeVerifier)
   
   return `https://accounts.spotify.com/authorize?` +
     `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
@@ -54,9 +54,7 @@ export const generateAuthUrl = async (): Promise<string> => {
 }
 
 // Exchange auth code for access token
-export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthResponse> => {
-  const codeVerifier = localStorage.getItem('spotify_code_verifier')
-  
+export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<SpotifyAuthResponse> => {
   if (!codeVerifier) {
     throw new Error('Code verifier not found')
   }
@@ -87,7 +85,7 @@ export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthRes
   localStorage.setItem('spotify_token_expires_at', (Date.now() + data.expires_in * 1000).toString())
   
   // Clean up
-  localStorage.removeItem('spotify_code_verifier')
+  localStorage.removeItem('code_verifier')
   
   return data
 }
