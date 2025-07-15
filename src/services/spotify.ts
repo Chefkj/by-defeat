@@ -13,12 +13,44 @@ export const SPOTIFY_CONFIG = {
   ].join(' ')
 }
 
-// Generate auth URL
-export const SPOTIFY_AUTH_URL = `https://accounts.spotify.com/authorize?` +
-  `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
-  `response_type=code&` +
-  `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
-  `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}`
+// Generate auth URL with PKCE
+export const generateAuthUrl = () => {
+  const codeVerifier = generateCodeVerifier()
+  const codeChallenge = generateCodeChallenge(codeVerifier)
+  
+  // Store code verifier for later use
+  localStorage.setItem('spotify_code_verifier', codeVerifier)
+  
+  return `https://accounts.spotify.com/authorize?` +
+    `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
+    `response_type=code&` +
+    `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
+    `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}&` +
+    `code_challenge=${codeChallenge}&` +
+    `code_challenge_method=S256`
+}
+
+// Helper functions for PKCE
+function generateCodeVerifier() {
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return base64URLEncode(array)
+}
+
+function generateCodeChallenge(verifier: string) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(verifier)
+  return crypto.subtle.digest('SHA-256', data).then(buffer => {
+    return base64URLEncode(new Uint8Array(buffer))
+  })
+}
+
+function base64URLEncode(buffer: Uint8Array) {
+  return btoa(String.fromCharCode(...buffer))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
 
 // Reference track ID from the issue
 export const REFERENCE_TRACK_ID = '7t7LrYqwUrIzcac0qS6lcG'
@@ -167,21 +199,6 @@ export const DEFAULT_TRACKS: SpotifyTrack[] = [
 ]
 
 // Auth utilities
-export const generateCodeVerifier = (): string => {
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
-  const values = crypto.getRandomValues(new Uint8Array(128))
-  return values.reduce((acc, x) => acc + possible[x % possible.length], '')
-}
-
-export const generateCodeChallenge = async (codeVerifier: string): Promise<string> => {
-  const data = new TextEncoder().encode(codeVerifier)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-}
-
 export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<SpotifyAuthResponse> => {
   const response = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
