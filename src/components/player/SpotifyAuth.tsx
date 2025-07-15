@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Button } from '../ui/Button'
+import { MusicButton } from '../ui/Button'
 import { SPOTIFY_AUTH_URL, generateCodeVerifier, generateCodeChallenge, exchangeCodeForToken } from '../../services/spotify'
 
 interface SpotifyAuthProps {
@@ -94,70 +94,48 @@ export const SpotifyAuth: React.FC<SpotifyAuthProps> = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
-      <motion.div
-        className="max-w-md w-full text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">By Defeat</h1>
-          <p className="text-gray-300 text-lg">
-            Connect your Spotify account to experience the full dynamic music player
-          </p>
-        </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="text-center space-y-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-4xl font-bold text-white mb-2">By Defeat</h1>
+          <p className="text-gray-300">Connect with Spotify to experience the full music player</p>
+        </motion.div>
 
-        {error && (
-          <motion.div
-            className="bg-red-900 border border-red-500 text-red-200 px-4 py-3 rounded mb-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {error}
-          </motion.div>
-        )}
-
-        <div className="space-y-4">
-          <Button
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          {error && (
+            <div className="mb-4 p-3 bg-red-500 text-white rounded-md">
+              {error}
+            </div>
+          )}
+          
+          <MusicButton
+            type="play"
             onClick={handleSpotifyAuth}
-            disabled={isLoading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2"
+            className="spotify-auth-button"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zM8.5 14.5c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm3 0c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75zm3 0c-.414 0-.75-.336-.75-.75s.336-.75.75-.75.75.336.75.75-.336.75-.75.75z" clipRule="evenodd" />
+            <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
             </svg>
-            <span>Connect with Spotify</span>
-          </Button>
+            Connect with Spotify
+          </MusicButton>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">or</span>
-            </div>
-          </div>
-
-          <Button
+          <MusicButton
+            type="skip"
             onClick={handleDemoMode}
-            disabled={isLoading}
-            variant="outline"
-            className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 py-3 px-6 rounded-lg"
+            className="mt-4 bg-gray-600 hover:bg-gray-700"
           >
             Try Demo Mode
-          </Button>
-        </div>
-
-        <div className="mt-8 text-sm text-gray-400">
-          <p className="mb-2">
-            Demo mode allows you to explore the player without Spotify authentication.
-          </p>
-          <p>
-            For the full experience with your music, connect your Spotify account.
-          </p>
-        </div>
-      </motion.div>
+          </MusicButton>
+        </motion.div>
+      </div>
     </div>
   )
 }

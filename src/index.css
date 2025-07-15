@@ -47,30 +47,52 @@
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Custom button styles for music controls */
+/* Custom button styles for music controls - Fix: Use regular CSS instead of @apply */
 .music-button {
-  @apply bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-all duration-200 active:scale-95;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .music-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
   transform: scale(1.05);
+}
+
+.music-button:active {
+  transform: scale(0.95);
 }
 
 /* Progress bar styling */
 .progress-bar {
-  @apply bg-white/20 rounded-full overflow-hidden;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  overflow: hidden;
 }
 
 .progress-bar-fill {
-  @apply bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-150;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  height: 100%;
+  transition: all 0.15s ease;
 }
 
 /* Spotify auth button */
 .spotify-auth-button {
-  @apply bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-full transition-all duration-200 flex items-center gap-2;
+  background-color: #22c55e;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .spotify-auth-button:hover {
+  background-color: #16a34a;
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
 }
