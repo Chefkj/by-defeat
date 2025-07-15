@@ -1,12 +1,13 @@
 import React, { createContext, useReducer, useEffect, ReactNode } from 'react'
-import type { PlayerState, SpotifyTrack } from '../types/spotify'
+import type { PlayerState, SpotifyTrack, AudioFeatures } from '../types/spotify'
 import { 
   DEFAULT_TRACKS, 
   getUserProfile, 
   getUserTracks, 
   getCurrentPlayback,
   getAccessToken,
-  getBandTracks  // Add this import
+  getBandTracks,
+  SpotifyService
 } from '../services/spotify'
 
 // Add user profile type
@@ -32,6 +33,7 @@ type PlayerAction =
   | { type: 'SET_USER_TRACKS'; payload: SpotifyTrack[] }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_AUDIO_FEATURES'; payload: AudioFeatures | null }
   | { type: 'NEXT_TRACK' }
   | { type: 'PREVIOUS_TRACK' }
   | { type: 'TOGGLE_PLAY' }
@@ -51,6 +53,7 @@ const initialState: PlayerState = {
   tracks: [],
   isLoading: false,
   error: null,
+  audioFeatures: null,
 }
 
 // Update reducer to handle new actions
@@ -84,6 +87,8 @@ const playerReducer = (state: PlayerState, action: PlayerAction): PlayerState =>
       return { ...state, isLoading: action.payload }
     case 'SET_ERROR':
       return { ...state, error: action.payload }
+    case 'SET_AUDIO_FEATURES':
+      return { ...state, audioFeatures: action.payload }
     case 'NEXT_TRACK': {
       const nextIndex = (state.currentIndex + 1) % state.playlist.length
       return {
@@ -91,6 +96,7 @@ const playerReducer = (state: PlayerState, action: PlayerAction): PlayerState =>
         currentIndex: nextIndex,
         currentTrack: state.playlist[nextIndex] || null,
         progress: 0,
+        audioFeatures: null, // Reset audio features when track changes
       }
     }
     case 'PREVIOUS_TRACK': {
@@ -100,6 +106,7 @@ const playerReducer = (state: PlayerState, action: PlayerAction): PlayerState =>
         currentIndex: prevIndex,
         currentTrack: state.playlist[prevIndex] || null,
         progress: 0,
+        audioFeatures: null, // Reset audio features when track changes
       }
     }
     case 'TOGGLE_PLAY':
@@ -123,6 +130,7 @@ interface PlayerContextType {
   authenticate: (accessToken: string) => void
   logout: () => void
   loadUserData: () => Promise<void>
+  loadAudioFeatures: (trackId: string) => Promise<void>
 }
 
 export const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
@@ -134,6 +142,46 @@ interface PlayerProviderProps {
 
 export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(playerReducer, initialState)
+  const spotifyServiceRef = React.useRef<SpotifyService | null>(null)
+
+  // Initialize Spotify service when authenticated
+  useEffect(() => {
+    if (state.isAuthenticated && state.accessToken) {
+      spotifyServiceRef.current = new SpotifyService(state.accessToken)
+    }
+  }, [state.isAuthenticated, state.accessToken])
+
+  // Load audio features when current track changes
+  useEffect(() => {
+    if (state.currentTrack && state.isAuthenticated && spotifyServiceRef.current) {
+      loadAudioFeatures(state.currentTrack.id)
+    }
+  }, [state.currentTrack, state.isAuthenticated])
+
+  const loadAudioFeatures = async (trackId: string) => {
+    if (!spotifyServiceRef.current) return
+    
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null })
+      const audioFeatures = await spotifyServiceRef.current.getAudioFeatures(trackId)
+      dispatch({ type: 'SET_AUDIO_FEATURES', payload: audioFeatures })
+    } catch (error) {
+      console.error('Failed to load audio features:', error)
+      // Don't set error for audio features - it's not critical
+      // Create mock audio features for demo purposes
+      const mockAudioFeatures: AudioFeatures = {
+        energy: 0.5 + Math.random() * 0.5,
+        valence: 0.3 + Math.random() * 0.7,
+        danceability: 0.4 + Math.random() * 0.6,
+        acousticness: Math.random() * 0.8,
+        instrumentalness: Math.random() * 0.5,
+        liveness: Math.random() * 0.4,
+        speechiness: Math.random() * 0.3,
+        tempo: 80 + Math.random() * 120,
+      }
+      dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
+    }
+  }
 
   // Initialize first track
   useEffect(() => {
@@ -274,7 +322,8 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     setCurrentTrack,
     authenticate,
     logout,
-    loadUserData
+    loadUserData,
+    loadAudioFeatures
   }
 
   return (

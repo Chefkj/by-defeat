@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PlayerProvider } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
+import { VisualizerDemo } from './components/player/VisualizerDemo'
 import { useEffect, useState } from 'react'
 import { exchangeCodeForToken, generateAuthUrl } from './services/spotify'
 
@@ -15,6 +16,7 @@ function App() {
             <Route path="/music" element={<MusicPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/callback" element={<CallbackPage />} />
+            <Route path="/visualizer" element={<VisualizerDemo />} />
           </Routes>
         </div>
       </Router>
@@ -91,6 +93,12 @@ const HomePage = () => {
                 >
                   Open Music Player
                 </Link>
+                <Link 
+                  to="/visualizer" 
+                  className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+                >
+                  Try Enhanced Visualizer
+                </Link>
                 <button 
                   onClick={() => {
                     localStorage.removeItem('spotify_auth_code')
@@ -115,6 +123,12 @@ const HomePage = () => {
                   className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
                 >
                   Experience the Music Player
+                </Link>
+                <Link 
+                  to="/visualizer" 
+                  className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+                >
+                  Try Enhanced Visualizer
                 </Link>
                 <button 
                   onClick={handleSpotifyConnect}

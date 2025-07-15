@@ -14,7 +14,7 @@ export const MusicPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Use state from PlayerContext instead of local state
-  const { volume, isAuthenticated, currentTrack, isPlaying } = state
+  const { volume, isAuthenticated, currentTrack, isPlaying, audioFeatures } = state
 
   useEffect(() => {
     if (audioRef.current) {
@@ -104,7 +104,12 @@ export const MusicPlayer: React.FC = () => {
         />
         
         <div className="absolute inset-0 z-0">
-          <AudioVisualizer isPlaying={isPlaying} theme={theme} />
+          <AudioVisualizer 
+            isPlaying={isPlaying} 
+            theme={theme} 
+            currentTrack={currentTrack} 
+            audioFeatures={audioFeatures || undefined} 
+          />
         </div>
         
         <div className="relative z-10 flex flex-col h-screen">

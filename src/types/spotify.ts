@@ -70,6 +70,7 @@ export interface PlayerState {
   tracks: SpotifyTrack[]
   isLoading: boolean
   error: string | null
+  audioFeatures: AudioFeatures | null
 }
 
 export interface UserProfile {
