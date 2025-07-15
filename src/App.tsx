@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PlayerProvider } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
@@ -52,12 +52,12 @@ const HomePage = () => (
           React 19 + Vite + TypeScript + Tailwind CSS + Framer Motion + React Router
         </p>
         <div className="mt-6">
-          <a 
-            href="/music" 
+          <Link 
+            to="/music" 
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
           >
             Experience the Music Player
-          </a>
+          </Link>
         </div>
       </motion.div>
     </main>

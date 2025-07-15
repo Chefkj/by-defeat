@@ -22,12 +22,19 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+        registry-url: 'https://registry.npmjs.org'
         
-    - name: Clean install dependencies
+    - name: Clean and install dependencies
       run: |
         rm -rf node_modules package-lock.json
         npm cache clean --force
-        npm install --no-optional
+        npm install --legacy-peer-deps
+        npm install @rollup/rollup-linux-x64-gnu --no-optional
+        
+    - name: Verify build tools
+      run: |
+        npx rollup --version
+        npx vite --version
         
     - name: Build
       run: npm run build
