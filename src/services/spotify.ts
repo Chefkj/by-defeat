@@ -13,10 +13,14 @@ export const SPOTIFY_CONFIG = {
   ].join(' ')
 }
 
+const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID
+const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'https://chefkj.github.io/by-defeat/callback'
+
+// In your auth URL generation:
 export const SPOTIFY_AUTH_URL = `https://accounts.spotify.com/authorize?` +
-  `client_id=${SPOTIFY_CONFIG.CLIENT_ID}&` +
+  `client_id=${CLIENT_ID}&` +
   `response_type=code&` +
-  `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
+  `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
   `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}`
 
 // Reference track ID from the issue
