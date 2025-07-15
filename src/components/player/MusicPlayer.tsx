@@ -183,17 +183,33 @@ export const MusicPlayer: React.FC = () => {
     >
       <div className="flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center space-x-4">
-          {currentTrack.image && (
-            <img
-              src={currentTrack.image}
-              alt={currentTrack.name}
-              className="w-12 h-12 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={toggleFullscreen}
-            />
-          )}
+          <div className="relative">
+            {currentTrack.image && (
+              <img
+                src={currentTrack.image}
+                alt={currentTrack.name}
+                className="w-12 h-12 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={toggleFullscreen}
+              />
+            )}
+            {isPlaying && (
+              <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent rounded-full">
+                <div className="h-full bg-blue-400 rounded-full animate-pulse"></div>
+              </div>
+            )}
+          </div>
           <div>
             <p className="text-white font-semibold">{currentTrack.name}</p>
             <p className="text-gray-400 text-sm">{currentTrack.artist}</p>
+            {isPlaying && (
+              <div className="flex items-center space-x-1 mt-1">
+                <div className="w-1 h-3 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '0ms'}}></div>
+                <div className="w-1 h-4 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '150ms'}}></div>
+                <div className="w-1 h-2 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '300ms'}}></div>
+                <div className="w-1 h-4 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '450ms'}}></div>
+                <div className="w-1 h-3 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '600ms'}}></div>
+              </div>
+            )}
           </div>
         </div>
 
