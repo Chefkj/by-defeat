@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { AudioVisualizer } from './AudioVisualizer'
-import type { ThemeType, AudioFeatures } from '../../types/spotify'
+import type { ThemeType, AudioFeatures, SpotifyTrack } from '../../types/spotify'
 
 export const VisualizerDemo: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false)
