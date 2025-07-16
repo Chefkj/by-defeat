@@ -181,8 +181,9 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
   if (!token) {
     try {
       token = await refreshAccessToken()
-    } catch {
-      throw new Error('Authentication required')
+    } catch (error) {
+      console.error('Failed to refresh access token:', error);
+      throw new Error('Authentication required');
     }
   }
   
