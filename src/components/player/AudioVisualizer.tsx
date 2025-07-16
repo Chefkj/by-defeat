@@ -314,7 +314,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
     const animateLoop = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       
-      initializeAudio()
+      // Use cached audio context or data
 
       // Create dynamic gradient background based on valence
       const valence = audioFeatures?.valence || 0.5
