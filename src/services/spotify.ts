@@ -181,8 +181,9 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
   if (!token) {
     try {
       token = await refreshAccessToken()
-    } catch (_error) {
-      throw new Error('Authentication required')
+    } catch (error) {
+      console.error('Failed to refresh access token:', error);
+      throw new Error('Authentication required');
     }
   }
   
@@ -213,7 +214,7 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
       }
       
       return retryResponse.json()
-    } catch (error) {
+    } catch {
       throw new Error('Authentication required')
     }
   }
@@ -471,7 +472,7 @@ export const getArtistTracks = async (artistName: string, limit: number = 20): P
               album: album,
               popularity: fullTrackResponse.popularity || 0
             }
-          } catch (error) {
+          } catch {
             // If individual track fetch fails, use track without popularity
             return {
               ...track,
