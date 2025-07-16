@@ -63,7 +63,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       if (valence > 0.7) {
         baseColors = baseColors.map(color => {
           // Brighten colors for happy tracks
-          return color.replace(/#/, '#').replace(/([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/, (_, r, g, b) => {
+          return color.replace(/([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/, (_, r, g, b) => {
             const rVal = Math.min(255, parseInt(r, 16) + 30)
             const gVal = Math.min(255, parseInt(g, 16) + 30)
             const bVal = Math.min(255, parseInt(b, 16) + 30)
