@@ -156,9 +156,9 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     if (state.currentTrack && state.isAuthenticated && spotifyServiceRef.current) {
       loadAudioFeatures(state.currentTrack.id)
     }
-  }, [state.currentTrack, state.isAuthenticated])
+  }, [state.currentTrack, state.isAuthenticated, loadAudioFeatures])
 
-  const loadAudioFeatures = async (trackId: string) => {
+  const loadAudioFeatures = React.useCallback(async (trackId: string) => {
     if (!spotifyServiceRef.current) return
     
     try {
