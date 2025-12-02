@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { PlayerProvider } from './contexts/PlayerContext'
+import { PlayerProvider, usePlayer } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
 import { VisualizerDemo } from './components/player/VisualizerDemo'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { exchangeCodeForToken, generateAuthUrl } from './services/spotify'
 
 function App() {
@@ -25,7 +25,8 @@ function App() {
 }
 
 const HomePage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { state, logout } = usePlayer()
+  const isAuthenticated = state.isAuthenticated
 
   const handleSpotifyConnect = async () => {
     try {
@@ -75,8 +76,6 @@ const HomePage = () => {
     const code = localStorage.getItem('spotify_auth_code')
     
     if (authenticated === 'true' && code) {
-      setIsAuthenticated(true)
-      
       // Clean up the URL
       window.history.replaceState({}, document.title, '/by-defeat/')
     }
@@ -132,9 +131,7 @@ const HomePage = () => {
                 </Link>
                 <button 
                   onClick={() => {
-                    localStorage.removeItem('spotify_auth_code')
-                    localStorage.removeItem('code_verifier')
-                    setIsAuthenticated(false)
+                    logout()
                   }}
                   className="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition-colors"
                 >
@@ -172,9 +169,6 @@ const HomePage = () => {
           )}
         </motion.div>
       </main>
-      
-      {/* Show the music player if authenticated */}
-      {isAuthenticated && <MusicPlayer />}
     </div>
   )
 }
@@ -202,9 +196,7 @@ const AboutPage = () => (
   </div>
 )
 
-import { usePlayer } from './contexts/PlayerContext'
 import { useNavigate } from 'react-router-dom'
-import { useRef } from 'react'
 
 const CallbackPage = () => {
   const { authenticate } = usePlayer()
