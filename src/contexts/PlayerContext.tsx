@@ -232,6 +232,11 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       try {
         const bandTracks = await getBandTracks(20)
         console.log(`Loaded ${bandTracks.length} By Defeat tracks`)
+        console.log('Sample track preview URLs:', bandTracks.slice(0, 3).map(t => ({ 
+          name: t.name, 
+          hasPreview: !!t.preview_url,
+          preview: t.preview_url 
+        })))
         
         // Set band tracks as the main playlist
         dispatch({ type: 'SET_PLAYLIST', payload: bandTracks })

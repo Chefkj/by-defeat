@@ -9,7 +9,7 @@ import { AudioVisualizer } from './AudioVisualizer'
 import type { ThemeType } from '../../types/spotify'
 
 export const MusicPlayer: React.FC = () => {
-  const { state, selectTrack } = usePlayer()
+  const { state, selectTrack, pause } = usePlayer()
   const navigate = useNavigate()
   const [theme, setTheme] = useState<ThemeType>('default')
   const [isFullscreen, setIsFullscreen] = useState(true) // Default to fullscreen when on /music page
@@ -27,16 +27,32 @@ export const MusicPlayer: React.FC = () => {
 
   // Sync audio element with isPlaying state
   useEffect(() => {
-    if (!audioRef.current || !currentTrack?.preview_url) return
+    if (!audioRef.current || !currentTrack?.preview_url) {
+      console.log('Cannot play:', { 
+        hasAudioRef: !!audioRef.current, 
+        hasTrack: !!currentTrack,
+        hasPreviewUrl: !!currentTrack?.preview_url,
+        previewUrl: currentTrack?.preview_url
+      })
+      return
+    }
     
     if (isPlaying) {
-      audioRef.current.play().catch(err => {
-        console.error('Failed to play audio:', err)
-      })
+      console.log('Attempting to play:', currentTrack.name)
+      const playPromise = audioRef.current.play()
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.error('Failed to play audio:', err)
+          // If autoplay fails, pause the player state
+          pause()
+        })
+      }
     } else {
+      console.log('Pausing audio')
       audioRef.current.pause()
     }
-  }, [isPlaying, currentTrack?.preview_url])
+  }, [isPlaying, currentTrack?.preview_url, currentTrack, pause])
 
   // Load new track when currentTrack changes
   useEffect(() => {
@@ -123,9 +139,22 @@ export const MusicPlayer: React.FC = () => {
           ref={audioRef}
           src={currentTrack.preview_url || ''}
           onLoadedMetadata={() => {
-            if (audioRef.current) {
-              // Handle metadata loaded
-            }
+            console.log('Audio metadata loaded:', {
+              duration: audioRef.current?.duration,
+              src: audioRef.current?.src
+            })
+          }}
+          onLoadedData={() => {
+            console.log('Audio data loaded and ready to play')
+          }}
+          onError={(e) => {
+            console.error('Audio error:', e)
+          }}
+          onPlay={() => {
+            console.log('Audio started playing')
+          }}
+          onPause={() => {
+            console.log('Audio paused')
           }}
           onTimeUpdate={() => {
             if (audioRef.current) {
