@@ -170,23 +170,49 @@ export const MusicPlayer: React.FC = () => {
             </button>
           </header>
 
-          <main className="flex-1 flex flex-col items-center justify-center p-6">
-            <div className="max-w-4xl w-full">
-              <TrackInfo track={currentTrack} theme={theme} />
-              
-              <div className="mt-8">
-                <PlayerControls theme={theme} />
-              </div>
+          <main className="flex-1 flex items-center justify-between p-6 overflow-hidden">
+            {/* Main player area */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="max-w-2xl w-full">
+                <TrackInfo track={currentTrack} theme={theme} />
+                
+                <div className="mt-6">
+                  <PlayerControls theme={theme} />
+                </div>
 
-              <motion.div
-                className="mt-8 text-center text-gray-400"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-              >
-                <p className="mb-2">Experience the dynamic nature of By Defeat</p>
-                <p>Watch as the player adapts to each song's unique energy</p>
-              </motion.div>
+                <motion.div
+                  className="mt-6 text-center text-gray-400 text-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                >
+                  <p>Experience the dynamic nature of By Defeat</p>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Track list sidebar */}
+            <div className="w-80 h-full overflow-y-auto bg-black/30 backdrop-blur-sm rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-4">By Defeat Tracks</h3>
+              <div className="space-y-2">
+                {state.playlist.slice(0, 10).map((track, index) => (
+                  <button
+                    key={track.id}
+                    onClick={() => {
+                      dispatch({ type: 'SET_CURRENT_INDEX', payload: index })
+                      dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
+                    }}
+                    className={`w-full text-left p-2 rounded-lg transition-colors ${
+                      state.currentIndex === index 
+                        ? 'bg-white/20 border border-white/30' 
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <p className="text-white text-sm font-medium truncate">{track.name}</p>
+                    <p className="text-gray-400 text-xs truncate">{track.artist}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           </main>
         </div>
