@@ -213,6 +213,12 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     
     isLoadingUserData.current = true
     
+    console.log('=== loadUserData starting ===')
+    console.log('State access token:', state.accessToken ? `EXISTS (first 10: ${state.accessToken.substring(0, 10)}...)` : 'MISSING')
+    console.log('LocalStorage access token:', localStorage.getItem('spotify_access_token') ? 'EXISTS' : 'MISSING')
+    console.log('LocalStorage refresh token:', localStorage.getItem('spotify_refresh_token') ? 'EXISTS' : 'MISSING')
+    console.log('LocalStorage expires at:', localStorage.getItem('spotify_token_expires_at'))
+    
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })

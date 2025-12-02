@@ -255,6 +255,8 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
   }
   
   console.log(`Making API request to: ${endpoint}`)
+  console.log(`Token available: ${token ? 'YES (first 10 chars: ' + token.substring(0, 10) + '...)' : 'NO'}`)
+  console.log(`Token from storage: ${localStorage.getItem('spotify_access_token') ? 'EXISTS' : 'MISSING'}`)
   
   const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
     ...options,
