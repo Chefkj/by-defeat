@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { Navigation } from '../Navigation'
 import { PlayerControls } from './PlayerControls'
 import { TrackInfo } from './TrackInfo'
 import { AudioVisualizer } from './AudioVisualizer'
 import type { ThemeType } from '../../types/spotify'
 
 export const MusicPlayer: React.FC = () => {
-  const { state } = usePlayer()
+  const { state, dispatch, selectTrack } = usePlayer()
   const navigate = useNavigate()
   const [theme, setTheme] = useState<ThemeType>('default')
   const [isFullscreen, setIsFullscreen] = useState(true) // Default to fullscreen when on /music page
@@ -115,7 +116,9 @@ export const MusicPlayer: React.FC = () => {
   // Fullscreen mode
   if (isFullscreen) {
     return (
-      <div className={`min-h-screen bg-gray-900 text-white theme-${theme} relative overflow-hidden`}>
+      <div className={`min-h-screen bg-gray-900 text-white theme-${theme} relative`}>
+        <Navigation />
+        
         <audio
           ref={audioRef}
           src={currentTrack.preview_url || ''}
@@ -131,7 +134,7 @@ export const MusicPlayer: React.FC = () => {
           }}
         />
         
-        <div className="absolute inset-0 z-0">
+        <div className="fixed inset-0 z-0 pt-16">
           <AudioVisualizer 
             isPlaying={isPlaying} 
             theme={theme} 
@@ -140,37 +143,8 @@ export const MusicPlayer: React.FC = () => {
           />
         </div>
         
-        <div className="relative z-10 flex flex-col h-screen">
-          <header className="p-6 flex justify-between items-center">
-            <div>
-              <motion.h1
-                className="text-4xl font-bold mb-2"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                By Defeat
-              </motion.h1>
-              <motion.p
-                className="text-gray-300"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                Let the music speak for itself
-              </motion.p>
-            </div>
-            <button
-              onClick={toggleFullscreen}
-              className="text-white/70 hover:text-white transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </header>
-
-          <main className="flex-1 flex items-center justify-between p-6 overflow-hidden">
+        <div className="relative z-10 pt-16 h-screen flex flex-col overflow-hidden">
+          <main className="flex-1 flex gap-6 p-6 overflow-hidden">
             {/* Main player area */}
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="max-w-2xl w-full">
@@ -191,25 +165,37 @@ export const MusicPlayer: React.FC = () => {
               </div>
             </div>
 
-            {/* Track list sidebar */}
-            <div className="w-80 h-full overflow-y-auto bg-black/30 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-4">By Defeat Tracks</h3>
-              <div className="space-y-2">
-                {state.playlist.slice(0, 10).map((track, index) => (
+            {/* Track list sidebar - scrollable */}
+            <div className="w-80 flex flex-col bg-black/30 backdrop-blur-sm rounded-lg overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <h3 className="text-lg font-semibold text-white">By Defeat Tracks</h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {state.playlist.map((track, index) => (
                   <button
                     key={track.id}
                     onClick={() => {
-                      dispatch({ type: 'SET_CURRENT_INDEX', payload: index })
-                      dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
+                      if (selectTrack) {
+                        selectTrack(index)
+                      }
                     }}
-                    className={`w-full text-left p-2 rounded-lg transition-colors ${
+                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
                       state.currentIndex === index 
-                        ? 'bg-white/20 border border-white/30' 
-                        : 'bg-white/5 hover:bg-white/10'
+                        ? 'bg-blue-600/40 border border-blue-400/50 shadow-lg' 
+                        : 'bg-white/5 hover:bg-white/10 border border-transparent'
                     }`}
                   >
-                    <p className="text-white text-sm font-medium truncate">{track.name}</p>
-                    <p className="text-gray-400 text-xs truncate">{track.artist}</p>
+                    <div className="flex items-center space-x-3">
+                      <img 
+                        src={track.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40"%3E%3Crect fill="%23333" width="40" height="40"/%3E%3C/svg%3E'}
+                        alt={track.album || 'Album cover'}
+                        className="w-10 h-10 rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{track.name}</p>
+                        <p className="text-gray-400 text-xs truncate">{track.artist}</p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -220,19 +206,6 @@ export const MusicPlayer: React.FC = () => {
     )
   }
 
-  const dispatch = (action: { type: string; payload: number | typeof currentTrack }) => {
-    switch (action.type) {
-      case 'SET_CURRENT_INDEX':
-        // This would typically be handled by the PlayerContext
-        // For now, we can call a method from the player context if available
-        break;
-      case 'SET_CURRENT_TRACK':
-        // This would also be handled by the PlayerContext
-        break;
-      default:
-        break;
-    }
-  }
   // Mini player mode (bottom bar)
   return (
     <motion.div

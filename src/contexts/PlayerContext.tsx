@@ -127,6 +127,7 @@ interface PlayerContextType {
   setVolume: (volume: number) => void
   setProgress: (progress: number) => void
   setCurrentTrack: (track: SpotifyTrack) => void
+  selectTrack: (index: number) => void
   authenticate: (accessToken: string) => void
   logout: () => void
   loadUserData: () => Promise<void>
@@ -329,7 +330,15 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
   }
 
-  const authenticate = useCallback((accessToken: string) => {
+  const selectTrack = (index: number) => {
+    if (index >= 0 && index < state.playlist.length) {
+      dispatch({ type: 'SET_CURRENT_INDEX', payload: index })
+      dispatch({ type: 'SET_CURRENT_TRACK', payload: state.playlist[index] })
+      dispatch({ type: 'SET_PLAYING', payload: true })
+    }
+  }
+
+  const authenticate = (accessToken: string) => {
     // Store token FIRST, then update state
     localStorage.setItem('spotify_access_token', accessToken)
     
@@ -342,7 +351,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     
     console.log('Access token stored successfully, updating auth state')
     dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, accessToken } })
-  }, [dispatch])
+  }
 
   const logout = useCallback(() => {
     // Clear all Spotify-related storage items
@@ -374,6 +383,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     setVolume,
     setProgress,
     setCurrentTrack,
+    selectTrack,
     authenticate,
     logout,
     loadUserData,

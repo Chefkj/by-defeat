@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { PlayerProvider, usePlayer } from './contexts/PlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
 import { VisualizerDemo } from './components/player/VisualizerDemo'
+import { Navigation } from './components/Navigation'
 import { useEffect, useState, useRef } from 'react'
 import { exchangeCodeForToken, generateAuthUrl } from './services/spotify'
 
@@ -12,9 +13,9 @@ function App() {
       <Router basename="/by-defeat">
         <div className="min-h-screen bg-gray-900 text-white">
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<><Navigation /><HomePage /></>} />
             <Route path="/music" element={<MusicPage />} />
-            <Route path="/about" element={<AboutPage />} />
+            <Route path="/about" element={<><Navigation /><AboutPage /></>} />
             <Route path="/callback" element={<CallbackPage />} />
             <Route path="/visualizer" element={<VisualizerDemo />} />
           </Routes>
@@ -83,26 +84,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen">
-      <header className="p-6">
-        <motion.h1
-          className="text-4xl font-bold"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          By Defeat
-        </motion.h1>
-        <motion.p
-          className="text-gray-300 mt-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          {isAuthenticated ? 'Connected to Spotify' : 'Band Website'}
-        </motion.p>
-      </header>
-      
-      <main className="p-6">
+      <main className="pt-20 p-6 max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -183,14 +165,22 @@ const MusicPage = () => {
 
 const AboutPage = () => (
   <div className="min-h-screen">
-    <main className="p-6">
+    <main className="pt-20 p-6 max-w-7xl mx-auto">
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
         <h2 className="text-2xl font-semibold mb-4">About By Defeat</h2>
-        <p>Learn more about the band and our music</p>
+        <p className="text-gray-300">Learn more about the band and our music</p>
+        
+        <div className="mt-8 space-y-4">
+          <h3 className="text-xl font-semibold">Our Story</h3>
+          <p className="text-gray-400">Founded with a passion for creating powerful music that speaks to the soul.</p>
+          
+          <h3 className="text-xl font-semibold mt-6">Connect With Us</h3>
+          <p className="text-gray-400">Follow us on social media and streaming platforms to stay updated with our latest releases.</p>
+        </div>
       </motion.div>
     </main>
   </div>
