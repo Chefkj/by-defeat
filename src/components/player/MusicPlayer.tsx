@@ -9,7 +9,7 @@ import { AudioVisualizer } from './AudioVisualizer'
 import type { ThemeType } from '../../types/spotify'
 
 export const MusicPlayer: React.FC = () => {
-  const { state, dispatch, selectTrack } = usePlayer()
+  const { state, selectTrack } = usePlayer()
   const navigate = useNavigate()
   const [theme, setTheme] = useState<ThemeType>('default')
   const [isFullscreen, setIsFullscreen] = useState(true) // Default to fullscreen when on /music page
@@ -243,76 +243,6 @@ export const MusicPlayer: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Band Tracks - Main Content */}
-      {state.playlist.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-lg font-semibold text-white mb-4">By Defeat - Latest Tracks</h4>
-          <div className="space-y-2">
-            {state.playlist.slice(0, 8).map((track, index) => (
-              <div 
-                key={track.id}
-                className={`flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer ${
-                  state.currentIndex === index 
-                    ? 'bg-blue-600/20 border border-blue-500' 
-                    : 'bg-gray-700 hover:bg-gray-600'
-                }`}
-                onClick={() => {
-                  dispatch({ type: 'SET_CURRENT_INDEX', payload: index })
-                  dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
-                }}
-              >
-                <img 
-                  src={track.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E'} 
-                  alt={track.album || 'Album cover'}
-                  className="w-12 h-12 rounded"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-white">{track.name}</p>
-                  <p className="text-gray-400 text-sm">{track.artist}</p>
-                  <p className="text-gray-500 text-xs">{track.album}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-500 text-xs">
-                    {Math.floor(track.duration_ms / 60000)}:
-                    {Math.floor((track.duration_ms % 60000) / 1000).toString().padStart(2, '0')}
-                  </span>
-                  {track.popularity && (
-                    <span className="text-xs bg-gray-600 px-2 py-1 rounded">
-                      {track.popularity}% popular
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* User's Saved Tracks - Secondary Content */}
-      {state.tracks.length > 0 && (
-        <div className="mt-8">
-          <h4 className="text-sm font-medium text-gray-400 mb-4">Your Saved Tracks</h4>
-          <div className="space-y-2">
-            {state.tracks.slice(0, 5).map((track: typeof state.tracks[number]) => (
-              <div 
-              key={track.id}
-              className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer"
-              >
-              <img 
-                src={track.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E'} 
-                alt={track.album || 'Album cover'}
-                className="w-10 h-10 rounded"
-              />
-              <div className="flex-1">
-                <p className="font-medium text-white text-sm">{track.name}</p>
-                <p className="text-gray-400 text-xs">{track.artist}</p>
-              </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </motion.div>
   )
 }
