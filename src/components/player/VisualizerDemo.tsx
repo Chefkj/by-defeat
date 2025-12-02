@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { AudioVisualizer } from './AudioVisualizer'
-import type { ThemeType, AudioFeatures, SpotifyTrack } from '../../types/spotify'
+import type { ThemeType, AudioFeatures } from '../../types/spotify'
 
 export const VisualizerDemo: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -39,12 +39,12 @@ export const VisualizerDemo: React.FC = () => {
     album: 'Demo Album',
     albumObject: {
       name: 'Demo Album',
-      images: [{ url: '/placeholder-album.jpg' }],
+      images: [],
       id: 'demo-album'
     },
     duration_ms: 180000,
     preview_url: null,
-    image: '/placeholder-album.jpg',
+    image: undefined,
     uri: 'spotify:track:demo',
     popularity: 75
   }

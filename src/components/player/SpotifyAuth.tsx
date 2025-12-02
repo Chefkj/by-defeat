@@ -21,6 +21,7 @@ export const SpotifyAuth: React.FC<SpotifyAuthProps> = ({ onAuthSuccess }) => {
         throw new Error('Spotify Client ID not configured')
       }
       
+      console.log('Generating auth URL...')
       const authUrl = await generateAuthUrl()
       
       // Validate the URL was generated
@@ -28,6 +29,19 @@ export const SpotifyAuth: React.FC<SpotifyAuthProps> = ({ onAuthSuccess }) => {
         throw new Error('Failed to generate valid Spotify auth URL')
       }
       
+      // Verify code verifier was stored in either storage
+      const verifier = localStorage.getItem('spotify_code_verifier') || sessionStorage.getItem('spotify_code_verifier')
+      console.log('Code verifier stored:', !!verifier)
+      console.log('Storage location:', localStorage.getItem('spotify_code_verifier') ? 'localStorage' : 'sessionStorage')
+      
+      if (!verifier) {
+        throw new Error('Failed to store code verifier in any storage')
+      }
+      
+      // Small delay to ensure localStorage is persisted
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      console.log('Redirecting to Spotify auth...')
       window.location.href = authUrl
     } catch (err) {
       console.error('Spotify auth error:', err)

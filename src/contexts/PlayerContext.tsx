@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useEffect, ReactNode } from 'react'
+import React, { useReducer, useEffect, ReactNode, useCallback, createContext } from 'react'
 import type { PlayerState, SpotifyTrack, AudioFeatures } from '../types/spotify'
 import { 
   DEFAULT_TRACKS, 
@@ -11,7 +11,7 @@ import {
 } from '../services/spotify'
 
 // Add user profile type
-interface UserProfile {
+export interface UserProfile {
   display_name: string
   images: Array<{ url: string }>
   followers: { total: number }
@@ -19,9 +19,9 @@ interface UserProfile {
   email: string
 }
 
-// Action types - add new actions for user data
+// Define action types
 type PlayerAction =
-  | { type: 'SET_CURRENT_TRACK'; payload: SpotifyTrack }
+  | { type: 'SET_CURRENT_TRACK'; payload: SpotifyTrack | null }
   | { type: 'SET_PLAYING'; payload: boolean }
   | { type: 'SET_PROGRESS'; payload: number }
   | { type: 'SET_DURATION'; payload: number }
@@ -116,7 +116,7 @@ const playerReducer = (state: PlayerState, action: PlayerAction): PlayerState =>
   }
 }
 
-// Update context interface
+// Define context type
 interface PlayerContextType {
   state: PlayerState
   dispatch: React.Dispatch<PlayerAction>
@@ -133,7 +133,8 @@ interface PlayerContextType {
   loadAudioFeatures: (trackId: string) => Promise<void>
 }
 
-export const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
+// Create context
+export const PlayerContext = createContext<PlayerContextType>({} as PlayerContextType)
 
 // Provider component
 interface PlayerProviderProps {
@@ -143,6 +144,7 @@ interface PlayerProviderProps {
 export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(playerReducer, initialState)
   const spotifyServiceRef = React.useRef<SpotifyService | null>(null)
+  const isLoadingUserData = React.useRef(false)
 
   // Initialize Spotify service when authenticated
   useEffect(() => {
@@ -150,13 +152,6 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       spotifyServiceRef.current = new SpotifyService(state.accessToken)
     }
   }, [state.isAuthenticated, state.accessToken])
-
-  // Load audio features when current track changes
-  useEffect(() => {
-    if (state.currentTrack && state.isAuthenticated && spotifyServiceRef.current) {
-      loadAudioFeatures(state.currentTrack.id)
-    }
-  }, [state.currentTrack, state.isAuthenticated, loadAudioFeatures])
 
   const loadAudioFeatures = React.useCallback(async (trackId: string) => {
     if (!spotifyServiceRef.current) return
@@ -181,7 +176,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       }
       dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
     }
-  }
+  }, [])
 
   // Initialize first track
   useEffect(() => {
@@ -198,15 +193,16 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     }
   }, [])
 
-  // Load user data when authenticated
-  useEffect(() => {
-    if (state.isAuthenticated && state.accessToken) {
-      loadUserData()
-    }
-  }, [state.isAuthenticated, state.accessToken])
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!state.accessToken) return
+    
+    // Prevent duplicate calls
+    if (isLoadingUserData.current) {
+      console.log('loadUserData already in progress, skipping...')
+      return
+    }
+    
+    isLoadingUserData.current = true
     
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
@@ -229,15 +225,12 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       } catch (tracksError) {
         console.error('Failed to load By Defeat tracks:', tracksError)
         // Fallback to default tracks if API call fails
-        dispatch({ type: 'SET_PLAYLIST', payload: DEFAULT_TRACKS })
-        dispatch({ type: 'SET_CURRENT_TRACK', payload: DEFAULT_TRACKS[0] })
-        dispatch({ type: 'SET_CURRENT_INDEX', payload: 0 })
       }
       
       // Load user's saved tracks separately (for display purposes)
       try {
         const userTracks = await getUserTracks(10)
-        dispatch({ type: 'SET_USER_TRACKS', payload: userTracks.items.map((item: any) => item.track) })
+        dispatch({ type: 'SET_USER_TRACKS', payload: userTracks })
       } catch {
         console.log('Could not load user saved tracks')
         dispatch({ type: 'SET_USER_TRACKS', payload: [] })
@@ -257,15 +250,36 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false })
     } catch (error) {
       console.error('Failed to load user data:', error)
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to load user data' })
+      
+      // Check if it's a permission error
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load user data'
+      if (errorMessage.includes('Insufficient permissions')) {
+        dispatch({ type: 'SET_ERROR', payload: 'Please log out and reconnect to grant required permissions' })
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load user data' })
+      }
+      
       dispatch({ type: 'SET_LOADING', payload: false })
       
       // Fallback to default tracks on complete failure
       dispatch({ type: 'SET_PLAYLIST', payload: DEFAULT_TRACKS })
       dispatch({ type: 'SET_CURRENT_TRACK', payload: DEFAULT_TRACKS[0] })
       dispatch({ type: 'SET_CURRENT_INDEX', payload: 0 })
+    } finally {
+      isLoadingUserData.current = false
     }
-  }
+  }, [state.accessToken, dispatch])
+
+  // Load user data when authenticated - with delay to ensure token is in storage
+  useEffect(() => {
+    if (state.isAuthenticated && state.accessToken) {
+      // Small delay to ensure localStorage has propagated
+      const timer = setTimeout(() => {
+        loadUserData()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [state.isAuthenticated, state.accessToken, loadUserData])
 
   const play = () => {
     dispatch({ type: 'SET_PLAYING', payload: true })
@@ -274,7 +288,6 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const pause = () => {
     dispatch({ type: 'SET_PLAYING', payload: false })
   }
-
   const next = () => {
     dispatch({ type: 'NEXT_TRACK' })
   }
@@ -295,20 +308,40 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
   }
 
-  const authenticate = (accessToken: string) => {
+  const authenticate = useCallback((accessToken: string) => {
+    // Store token FIRST, then update state
     localStorage.setItem('spotify_access_token', accessToken)
+    
+    // Verify storage succeeded
+    const stored = localStorage.getItem('spotify_access_token')
+    if (!stored) {
+      console.error('Failed to store access token in localStorage')
+      return
+    }
+    
+    console.log('Access token stored successfully, updating auth state')
     dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, accessToken } })
-  }
+  }, [dispatch])
 
-  const logout = () => {
+  const logout = useCallback(() => {
+    // Clear all Spotify-related storage items
     localStorage.removeItem('spotify_access_token')
     localStorage.removeItem('spotify_refresh_token')
+    localStorage.removeItem('spotify_token_expiry')
     localStorage.removeItem('spotify_auth_code')
-    localStorage.removeItem('code_verifier')
+    localStorage.removeItem('spotify_code_verifier')
+    localStorage.removeItem('spotify_code_verifier_timestamp')
+    localStorage.removeItem('spotify_auth_state')
+    
+    // Also clear sessionStorage
+    sessionStorage.removeItem('spotify_code_verifier')
+    sessionStorage.removeItem('spotify_code_verifier_timestamp')
+    sessionStorage.removeItem('spotify_auth_state')
+    
     dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: false, accessToken: null } })
     dispatch({ type: 'SET_USER_PROFILE', payload: null })
     dispatch({ type: 'SET_USER_TRACKS', payload: [] })
-  }
+  }, [dispatch])
 
   const contextValue: PlayerContextType = {
     state,

@@ -29,11 +29,42 @@ const HomePage = () => {
 
   const handleSpotifyConnect = async () => {
     try {
+      console.log('Starting fresh authentication flow...')
+      
+      // Clear ALL existing auth data to ensure completely clean state
+      console.log('Clearing all existing auth data...')
+      localStorage.removeItem('spotify_access_token')
+      localStorage.removeItem('spotify_refresh_token')
+      localStorage.removeItem('spotify_token_expires_at')
+      localStorage.removeItem('spotify_auth_code')
+      localStorage.removeItem('spotify_code_verifier')
+      localStorage.removeItem('spotify_code_verifier_timestamp')
+      localStorage.removeItem('spotify_auth_state')
+      sessionStorage.removeItem('spotify_code_verifier')
+      sessionStorage.removeItem('spotify_code_verifier_timestamp')
+      sessionStorage.removeItem('spotify_auth_state')
+      console.log('Cleared all existing auth data')
+      
+      console.log('Generating auth URL...')
       const authUrl = await generateAuthUrl()
+      
+      // Verify code verifier was stored in either storage
+      const verifier = localStorage.getItem('spotify_code_verifier') || sessionStorage.getItem('spotify_code_verifier')
+      console.log('Code verifier stored:', !!verifier)
+      console.log('Storage location:', localStorage.getItem('spotify_code_verifier') ? 'localStorage' : 'sessionStorage')
+      
+      if (!verifier) {
+        throw new Error('Failed to store code verifier in any storage')
+      }
+      
+      // Small delay to ensure localStorage is persisted
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      console.log('Redirecting to Spotify auth...')
       window.location.href = authUrl
     } catch (error) {
       console.error('Failed to generate auth URL:', error)
-      alert('Failed to start authentication process')
+      alert('Failed to start authentication process: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
@@ -172,14 +203,49 @@ const AboutPage = () => (
 )
 
 import { usePlayer } from './contexts/PlayerContext'
+import { useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
 
 const CallbackPage = () => {
   const { authenticate } = usePlayer()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const isExchangingToken = useRef(false)
 
   useEffect(() => {
     const handleCallback = async () => {
+      console.log('=== Callback Page Loaded ===')
+      
+      // Prevent duplicate exchanges (React StrictMode & re-mounts)
+      if (isExchangingToken.current) {
+        console.log('Token exchange already in progress, skipping...')
+        return
+      }
+      
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get('code')
+      
+      // If there's no code in URL but we have valid tokens, just navigate to music
+      if (!code) {
+        const existingToken = localStorage.getItem('spotify_access_token')
+        const existingExpiry = localStorage.getItem('spotify_token_expires_at')
+        
+        if (existingToken && existingExpiry && Date.now() < parseInt(existingExpiry)) {
+          console.log('No code in URL but valid token exists, navigating to music...')
+          authenticate(existingToken)
+          navigate('/music')
+          return
+        }
+        
+        console.log('No code and no valid token, redirecting to home...')
+        navigate('/')
+        return
+      }
+      
+      // We have a code - always exchange it (even if old tokens exist)
+      isExchangingToken.current = true
+      
       // Set a timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
         setError('Authentication timeout - please try again')
@@ -187,8 +253,7 @@ const CallbackPage = () => {
       }, 30000) // 30 second timeout
 
       try {
-        const urlParams = new URLSearchParams(window.location.search)
-        const code = urlParams.get('code')
+        const state = urlParams.get('state')
         const error = urlParams.get('error')
         
         if (error) {
@@ -199,38 +264,67 @@ const CallbackPage = () => {
           return
         }
         
-        if (code) {
-          console.log('Exchanging code for token...')
-          const tokens = await exchangeCodeForToken(code)
-          console.log('Token exchange successful!')
-          
-          if (tokens.access_token) {
-            authenticate(tokens.access_token)
-            localStorage.setItem('spotify_auth_code', code)
-            
-            // Clear timeout before redirect
-            clearTimeout(timeoutId)
-            
-            // Redirect to music player
-            window.location.href = '/by-defeat/music?authenticated=true'
-          } else {
-            throw new Error('No access token received')
-          }
-        } else {
-          setError('No authorization code received')
+        // Verify state parameter to prevent CSRF and ensure fresh auth
+        const storedState = localStorage.getItem('spotify_auth_state') || sessionStorage.getItem('spotify_auth_state')
+        if (state && storedState && state !== storedState) {
+          console.error('State mismatch:', { received: state, stored: storedState })
+          setError('Invalid auth state - please try again')
           setIsLoading(false)
           clearTimeout(timeoutId)
+          isExchangingToken.current = false
+          return
+        }
+        
+        console.log('Exchanging code for token...')
+        console.log('Auth code (first 10 chars):', code.substring(0, 10) + '...')
+        const tokens = await exchangeCodeForToken(code)
+        console.log('Token exchange successful!', { hasAccessToken: !!tokens.access_token, hasRefreshToken: !!tokens.refresh_token })
+        
+        if (tokens.access_token) {
+          authenticate(tokens.access_token)
+          localStorage.setItem('spotify_auth_code', code)
+          
+          // Clear timeout before redirect
+          clearTimeout(timeoutId)
+          
+          // Don't reset flag on success - keep it locked to prevent re-runs during navigation
+          // Redirect to music player
+          navigate('/music')
+        } else {
+          throw new Error('No access token received')
         }
       } catch (err) {
         console.error('Token exchange failed:', err)
-        setError(`Failed to complete authentication: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        
+        // Clear ALL auth data so user can start fresh - don't keep invalid state
+        console.log('Clearing all auth data due to exchange failure...')
+        localStorage.removeItem('spotify_access_token')
+        localStorage.removeItem('spotify_refresh_token')
+        localStorage.removeItem('spotify_token_expires_at')
+        localStorage.removeItem('spotify_auth_code')
+        localStorage.removeItem('spotify_code_verifier')
+        localStorage.removeItem('spotify_code_verifier_timestamp')
+        localStorage.removeItem('spotify_auth_state')
+        sessionStorage.removeItem('spotify_code_verifier')
+        sessionStorage.removeItem('spotify_code_verifier_timestamp')
+        sessionStorage.removeItem('spotify_auth_state')
+        
+        setError(`Authentication failed. Please go back to home and connect again.`)
         setIsLoading(false)
         clearTimeout(timeoutId)
+        
+        // Reset flag on error
+        isExchangingToken.current = false
+        
+        // Redirect to home after 3 seconds
+        setTimeout(() => {
+          navigate('/')
+        }, 3000)
       }
     }
     
     handleCallback()
-  }, [authenticate])
+  }, [authenticate, navigate])
 
   if (error) {
     return (

@@ -8,6 +8,7 @@ export const SPOTIFY_CONFIG = {
     'streaming',
     'user-read-email',
     'user-read-private',
+    'user-library-read',
     'user-read-playback-state',
     'user-modify-playback-state',
     'user-read-currently-playing',
@@ -41,15 +42,29 @@ export const generateAuthUrl = async (): Promise<string> => {
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = await generateCodeChallenge(codeVerifier)
   
+  // Generate a unique state parameter to prevent auth code reuse
+  const state = Math.random().toString(36).substring(2, 15)
+  
   // Store code verifier with a timestamp and extra logging
   console.log('Storing code verifier:', codeVerifier.substring(0, 10) + '...')
+  console.log('Auth state:', state)
+  
+  // Store in both localStorage AND sessionStorage as backup
   localStorage.setItem('spotify_code_verifier', codeVerifier)
   localStorage.setItem('spotify_code_verifier_timestamp', Date.now().toString())
+  localStorage.setItem('spotify_auth_state', state)
+  sessionStorage.setItem('spotify_code_verifier', codeVerifier)
+  sessionStorage.setItem('spotify_code_verifier_timestamp', Date.now().toString())
+  sessionStorage.setItem('spotify_auth_state', state)
   
   // Verify it was stored
   const stored = localStorage.getItem('spotify_code_verifier')
-  if (!stored) {
-    throw new Error('Failed to store code verifier')
+  const sessionStored = sessionStorage.getItem('spotify_code_verifier')
+  console.log('Stored in localStorage:', !!stored)
+  console.log('Stored in sessionStorage:', !!sessionStored)
+  
+  if (!stored && !sessionStored) {
+    throw new Error('Failed to store code verifier in any storage')
   }
   
   return `https://accounts.spotify.com/authorize?` +
@@ -58,66 +73,117 @@ export const generateAuthUrl = async (): Promise<string> => {
     `redirect_uri=${encodeURIComponent(SPOTIFY_CONFIG.REDIRECT_URI)}&` +
     `scope=${encodeURIComponent(SPOTIFY_CONFIG.SCOPES)}&` +
     `code_challenge=${codeChallenge}&` +
-    `code_challenge_method=S256`
+    `code_challenge_method=S256&` +
+    `state=${state}`
 }
+
+// Module-level flag to prevent concurrent token exchanges
+let isExchangingCode = false
+let exchangePromise: Promise<SpotifyAuthResponse> | null = null
 
 // Exchange auth code for access token
 export const exchangeCodeForToken = async (code: string): Promise<SpotifyAuthResponse> => {
-  const codeVerifier = localStorage.getItem('spotify_code_verifier')
-  const timestamp = localStorage.getItem('spotify_code_verifier_timestamp')
-  
-  console.log('Code verifier check:', {
-    exists: !!codeVerifier,
-    timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : 'none',
-    age: timestamp ? Date.now() - parseInt(timestamp) : 'unknown'
-  })
-  
-  if (!codeVerifier) {
-    // List all localStorage keys for debugging
-    const allKeys = Object.keys(localStorage)
-    console.error('localStorage keys:', allKeys)
-    throw new Error('Code verifier not found - please restart the authentication process')
+  // If already exchanging this code, return the existing promise
+  if (isExchangingCode && exchangePromise) {
+    console.log('Token exchange already in progress, returning existing promise...')
+    return exchangePromise
   }
-
-  // Check if code verifier is too old (older than 10 minutes)
-  if (timestamp && Date.now() - parseInt(timestamp) > 600000) {
-    localStorage.removeItem('spotify_code_verifier')
-    localStorage.removeItem('spotify_code_verifier_timestamp')
-    throw new Error('Code verifier expired - please restart the authentication process')
-  }
-
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: SPOTIFY_CONFIG.REDIRECT_URI,
-      client_id: SPOTIFY_CONFIG.CLIENT_ID,
-      code_verifier: codeVerifier,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    console.error('Token exchange failed:', errorData)
-    throw new Error(`Failed to exchange code for token: ${response.status} ${response.statusText}`)
-  }
-
-  const data = await response.json()
   
-  // Store tokens
-  localStorage.setItem('spotify_access_token', data.access_token)
-  localStorage.setItem('spotify_refresh_token', data.refresh_token)
-  localStorage.setItem('spotify_token_expires_at', (Date.now() + data.expires_in * 1000).toString())
+  // Set flag and create promise
+  isExchangingCode = true
+  exchangePromise = (async () => {
+    try {
+      // Try to get from localStorage first, then sessionStorage as fallback
+      let codeVerifier = localStorage.getItem('spotify_code_verifier')
+      let timestamp = localStorage.getItem('spotify_code_verifier_timestamp')
+      
+      if (!codeVerifier) {
+        console.log('Code verifier not in localStorage, trying sessionStorage...')
+        codeVerifier = sessionStorage.getItem('spotify_code_verifier')
+        timestamp = sessionStorage.getItem('spotify_code_verifier_timestamp')
+      }
+      
+      console.log('Code verifier check:', {
+        exists: !!codeVerifier,
+        source: codeVerifier ? (localStorage.getItem('spotify_code_verifier') ? 'localStorage' : 'sessionStorage') : 'none',
+        timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : 'none',
+        age: timestamp ? Date.now() - parseInt(timestamp) : 'unknown',
+        allLocalStorageKeys: Object.keys(localStorage),
+        allSessionStorageKeys: Object.keys(sessionStorage)
+      })
+      
+      if (!codeVerifier) {
+        // List all storage keys for debugging
+        console.error('localStorage keys:', Object.keys(localStorage))
+        console.error('sessionStorage keys:', Object.keys(sessionStorage))
+        console.error('Code verifier missing! User needs to restart auth flow.')
+        throw new Error('Code verifier not found - please restart the authentication process')
+      }
+
+      // Check if code verifier is too old (older than 10 minutes)
+      if (timestamp && Date.now() - parseInt(timestamp) > 600000) {
+        localStorage.removeItem('spotify_code_verifier')
+        localStorage.removeItem('spotify_code_verifier_timestamp')
+        throw new Error('Code verifier expired - please restart the authentication process')
+      }
+
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: SPOTIFY_CONFIG.REDIRECT_URI,
+          client_id: SPOTIFY_CONFIG.CLIENT_ID,
+          code_verifier: codeVerifier,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Token exchange failed:', errorData)
+        // DON'T remove code verifier on failure - user might retry
+        throw new Error(`Failed to exchange code for token: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      // Only proceed if we actually got tokens
+      if (!data.access_token || !data.refresh_token) {
+        console.error('Invalid token response:', data)
+        throw new Error('No tokens received from Spotify')
+      }
+      
+      console.log('Token exchange successful, storing tokens...')
+      
+      // Store tokens
+      localStorage.setItem('spotify_access_token', data.access_token)
+      localStorage.setItem('spotify_refresh_token', data.refresh_token)
+      localStorage.setItem('spotify_token_expires_at', (Date.now() + data.expires_in * 1000).toString())
+      
+      console.log('Tokens stored successfully, cleaning up code verifier...')
+      
+      // ONLY remove code verifier after successful token storage
+      localStorage.removeItem('spotify_code_verifier')
+      localStorage.removeItem('spotify_code_verifier_timestamp')
+      localStorage.removeItem('spotify_auth_state')
+      sessionStorage.removeItem('spotify_code_verifier')
+      sessionStorage.removeItem('spotify_code_verifier_timestamp')
+      sessionStorage.removeItem('spotify_auth_state')
+      
+      console.log('Code verifier cleanup complete')
+      
+      return data
+    } finally {
+      // Reset flag after completion (success or failure)
+      isExchangingCode = false
+      exchangePromise = null
+    }
+  })()
   
-  // Clean up code verifier and timestamp
-  localStorage.removeItem('spotify_code_verifier')
-  localStorage.removeItem('spotify_code_verifier_timestamp')
-  
-  return data
+  return exchangePromise
 }
 
 // Get current access token
@@ -179,6 +245,7 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
   let token = getAccessToken()
   
   if (!token) {
+    console.warn('No access token found, attempting refresh...')
     try {
       token = await refreshAccessToken()
     } catch (error) {
@@ -186,6 +253,8 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
       throw new Error('Authentication required');
     }
   }
+  
+  console.log(`Making API request to: ${endpoint}`)
   
   const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
     ...options,
@@ -196,8 +265,11 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
     },
   })
   
+  console.log(`API response status for ${endpoint}: ${response.status}`)
+  
   if (response.status === 401) {
     // Token expired, try to refresh
+    console.warn('Got 401, refreshing token...')
     try {
       token = await refreshAccessToken()
       const retryResponse = await fetch(`https://api.spotify.com/v1${endpoint}`, {
@@ -210,16 +282,27 @@ export const spotifyApi = async (endpoint: string, options: RequestInit = {}) =>
       })
       
       if (!retryResponse.ok) {
+        const errorText = await retryResponse.text()
+        console.error(`API request failed after token refresh: ${retryResponse.status}`, errorText)
         throw new Error('API request failed after token refresh')
       }
       
       return retryResponse.json()
-    } catch {
+    } catch (error) {
+      console.error('Token refresh failed:', error)
       throw new Error('Authentication required')
     }
   }
   
+  if (response.status === 403) {
+    const errorData = await response.json().catch(() => ({}))
+    console.error('403 Forbidden - Insufficient permissions:', errorData)
+    throw new Error('Insufficient permissions. Please re-authenticate with the app.')
+  }
+  
   if (!response.ok) {
+    const errorText = await response.text()
+    console.error(`API request failed: ${response.status}`, errorText)
     throw new Error(`API request failed: ${response.status}`)
   }
   
@@ -293,9 +376,9 @@ interface SpotifyTrackResponse {
   duration_ms: number
   preview_url: string | null
   external_urls: { spotify: string }
-  popularity?: number  // Add this
-  uri: string  // Add this
-  explicit?: boolean  // Add this
+  popularity: number
+  uri: string
+  explicit: boolean
 }
 
 interface SpotifySearchResponse {
@@ -362,9 +445,9 @@ export class SpotifyService {
       external_urls: track.external_urls,
       image: track.album?.images?.[0]?.url,
       coverArt: track.album?.images?.[0]?.url,
-      popularity: (track as any).popularity || 0,
-      uri: (track as any).uri || `spotify:track:${track.id}`,
-      explicit: (track as any).explicit || false
+      popularity: track.popularity || 0,
+      uri: track.uri || `spotify:track:${track.id}`,
+      explicit: track.explicit || false
     }
   }
 
@@ -390,9 +473,9 @@ export class SpotifyService {
       external_urls: track.external_urls,
       image: track.album?.images?.[0]?.url,
       coverArt: track.album?.images?.[0]?.url,
-      popularity: (track as any).popularity || 0,
-      uri: (track as any).uri || `spotify:track:${track.id}`,
-      explicit: (track as any).explicit || false
+      popularity: track.popularity || 0,
+      uri: track.uri || `spotify:track:${track.id}`,
+      explicit: track.explicit || false
     }))
   }
 
@@ -411,12 +494,12 @@ export const DEFAULT_TRACKS: SpotifyTrack[] = [
     album: 'Demo Album',
     albumObject: {  // Add this object
       name: 'Demo Album',
-      images: [{ url: '/placeholder-album.jpg' }],
+      images: [{ url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E' }],
       id: 'demo-album-1'
     },
     duration_ms: 180000,
     preview_url: null,
-    image: '/placeholder-album.jpg',
+    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E',
     popularity: 75,
     uri: 'spotify:track:sample1'
   },
@@ -428,12 +511,12 @@ export const DEFAULT_TRACKS: SpotifyTrack[] = [
     album: 'Demo Album',
     albumObject: {  // Add this object
       name: 'Demo Album',
-      images: [{ url: '/placeholder-album.jpg' }],
+      images: [{ url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E' }],
       id: 'demo-album-1'
     },
     duration_ms: 210000,
     preview_url: null,
-    image: '/placeholder-album.jpg',
+    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E',
     popularity: 80,
     uri: 'spotify:track:sample2'
   }
@@ -456,7 +539,7 @@ export const getArtistTracks = async (artistName: string, limit: number = 20): P
     // Get the artist's albums
     const albumsResponse = await spotifyApi(`/artists/${artist.id}/albums?include_groups=album,single&market=US&limit=10`)
     
-    let allTracks: any[] = [...topTracksResponse.tracks]
+    let allTracks: SpotifyTrackResponse[] = [...topTracksResponse.tracks]
     
     // Get tracks from albums (these DON'T have popularity)
     for (const album of albumsResponse.items) {
@@ -464,7 +547,7 @@ export const getArtistTracks = async (artistName: string, limit: number = 20): P
       
       // For album tracks, we need to fetch individual track details to get popularity
       const albumTracksWithPopularity = await Promise.all(
-        albumTracksResponse.items.map(async (track: any) => {
+        albumTracksResponse.items.map(async (track: SpotifyTrackResponse) => {
           try {
             const fullTrackResponse = await spotifyApi(`/tracks/${track.id}`)
             return {
@@ -495,7 +578,7 @@ export const getArtistTracks = async (artistName: string, limit: number = 20): P
       .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       .slice(0, limit)
     
-    return sortedTracks.map((track: any) => ({
+    return sortedTracks.map((track: SpotifyTrackResponse) => ({
       id: track.id,
       name: track.name,
       artist: track.artists[0]?.name || artistName,
@@ -534,7 +617,7 @@ export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]>
       
       if (topTracksResponse.tracks.length >= limit) {
         // If we have enough top tracks, just return those
-        return topTracksResponse.tracks.map((track: any) => ({
+        return topTracksResponse.tracks.map((track: SpotifyTrackResponse) => ({
           id: track.id,
           name: track.name,
           artist: track.artists[0]?.name || 'By Defeat',
@@ -557,8 +640,8 @@ export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]>
     
     if (searchResponse.tracks.items.length > 0) {
       return searchResponse.tracks.items
-        .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0))
-        .map((track: any) => ({
+        .sort((a: SpotifyTrackResponse, b: SpotifyTrackResponse) => (b.popularity || 0) - (a.popularity || 0))
+        .map((track: SpotifyTrackResponse) => ({
           id: track.id,
           name: track.name,
           artist: track.artists[0]?.name || 'By Defeat',

@@ -1,20 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { PlayerControls } from './PlayerControls'
 import { TrackInfo } from './TrackInfo'
 import { AudioVisualizer } from './AudioVisualizer'
-import { SpotifyAuth } from './SpotifyAuth'
 import type { ThemeType } from '../../types/spotify'
 
 export const MusicPlayer: React.FC = () => {
-  const { state, authenticate } = usePlayer()
+  const { state } = usePlayer()
+  const navigate = useNavigate()
   const [theme, setTheme] = useState<ThemeType>('default')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Use state from PlayerContext instead of local state
   const { volume, isAuthenticated, currentTrack, isPlaying, audioFeatures } = state
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/')
+    }
+  }, [isAuthenticated, navigate])
 
   useEffect(() => {
     if (audioRef.current) {
@@ -58,18 +66,18 @@ export const MusicPlayer: React.FC = () => {
     }
   }
 
-  const handleAuthSuccess = (token: string) => {
-    authenticate(token)
-  }
-
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
   }
 
+  // Show loading message while redirecting
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <SpotifyAuth onAuthSuccess={handleAuthSuccess} />
+        <div className="text-white text-center">
+          <p className="text-xl">Please connect with Spotify first</p>
+          <p className="text-gray-400 mt-2">Redirecting...</p>
+        </div>
       </div>
     )
   }
@@ -236,7 +244,7 @@ export const MusicPlayer: React.FC = () => {
                 }}
               >
                 <img 
-                  src={track.image || '/placeholder-album.jpg'} 
+                  src={track.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23333" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif"%3ENo Album Art%3C/text%3E%3C/svg%3E'} 
                   alt={track.album || 'Album cover'}
                   className="w-12 h-12 rounded"
                 />
@@ -267,20 +275,20 @@ export const MusicPlayer: React.FC = () => {
         <div className="mt-8">
           <h4 className="text-sm font-medium text-gray-400 mb-4">Your Saved Tracks</h4>
           <div className="space-y-2">
-            {state.tracks.slice(0, 5).map((track) => (
+            {state.tracks.slice(0, 5).map((track: typeof state.tracks[number]) => (
               <div 
-                key={track.id}
-                className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer"
+              key={track.id}
+              className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer"
               >
-                <img 
-                  src={track.image || '/placeholder-album.jpg'} 
-                  alt={track.album || 'Album cover'}
-                  className="w-10 h-10 rounded"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-white text-sm">{track.name}</p>
-                  <p className="text-gray-400 text-xs">{track.artist}</p>
-                </div>
+              <img 
+                src={track.image || '/placeholder-album.jpg'} 
+                alt={track.album || 'Album cover'}
+                className="w-10 h-10 rounded"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-white text-sm">{track.name}</p>
+                <p className="text-gray-400 text-xs">{track.artist}</p>
+              </div>
               </div>
             ))}
           </div>
