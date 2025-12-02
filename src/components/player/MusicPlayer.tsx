@@ -147,15 +147,15 @@ export const MusicPlayer: React.FC = () => {
           <main className="flex-1 flex gap-6 p-6 overflow-hidden">
             {/* Main player area */}
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="max-w-2xl w-full">
+              <div className="max-w-xl w-full">
                 <TrackInfo track={currentTrack} theme={theme} />
                 
-                <div className="mt-6">
+                <div className="mt-4">
                   <PlayerControls theme={theme} />
                 </div>
 
                 <motion.div
-                  className="mt-6 text-center text-gray-400 text-sm"
+                  className="mt-4 text-center text-gray-400 text-xs"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6, duration: 0.6 }}

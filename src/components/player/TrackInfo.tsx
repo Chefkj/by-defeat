@@ -23,14 +23,14 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({ track, theme }) => {
 
   return (
     <motion.div
-      className="text-center py-4"
+      className="text-center py-2"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       {/* Album artwork */}
       <motion.div
-        className="relative mx-auto mb-4 w-48 h-48 rounded-lg overflow-hidden shadow-2xl"
+        className="relative mx-auto mb-3 w-32 h-32 rounded-lg overflow-hidden shadow-xl"
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -59,10 +59,10 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({ track, theme }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        <h2 className="text-2xl font-bold mb-1 text-white">{track.name}</h2>
-        <p className="text-lg text-gray-300 mb-2">{track.artist}</p>
+        <h2 className="text-xl font-bold mb-1 text-white">{track.name}</h2>
+        <p className="text-base text-gray-300 mb-1">{track.artist}</p>
         {track.album && (
-          <p className="text-sm text-gray-400">{track.album}</p>
+          <p className="text-xs text-gray-400">{track.album}</p>
         )}
       </motion.div>
 
