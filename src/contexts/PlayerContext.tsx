@@ -193,6 +193,15 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     }
   }, [])
 
+  // Load audio features when track changes
+  useEffect(() => {
+    if (state.currentTrack?.id && state.isAuthenticated) {
+      const trackName = state.currentTrack.name
+      console.log('Loading audio features for track:', trackName)
+      loadAudioFeatures(state.currentTrack.id)
+    }
+  }, [state.currentTrack?.id, state.currentTrack?.name, state.isAuthenticated, loadAudioFeatures])
+
   const loadUserData = useCallback(async () => {
     if (!state.accessToken) return
     
