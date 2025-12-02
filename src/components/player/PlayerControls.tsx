@@ -1,8 +1,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { usePlayer } from '../../hooks/usePlayer'
-import { Button } from '@/components/ui/button'
-import { Slider } from '@/components/ui/slider'
+import { Button } from '../ui/button'
+import { Slider } from '../ui/slider'
 import type { ThemeType } from '../../types/spotify'
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react'
 
