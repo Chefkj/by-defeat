@@ -246,8 +246,14 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       try {
         const userTracks = await getUserTracks(10)
         dispatch({ type: 'SET_USER_TRACKS', payload: userTracks })
-      } catch {
-        console.log('Could not load user saved tracks')
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : ''
+        if (errorMessage.includes('Insufficient permissions') || errorMessage.includes('403')) {
+          console.warn('Missing user-library-read scope. User needs to re-authenticate.')
+          console.warn('To fix: 1) Disconnect, 2) Clear browser cache/cookies for this site, 3) Reconnect')
+        } else {
+          console.log('Could not load user saved tracks:', errorMessage)
+        }
         dispatch({ type: 'SET_USER_TRACKS', payload: [] })
       }
       
