@@ -11,7 +11,7 @@ export const MusicPlayer: React.FC = () => {
   const { state } = usePlayer()
   const navigate = useNavigate()
   const [theme, setTheme] = useState<ThemeType>('default')
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(true) // Default to fullscreen when on /music page
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Use state from PlayerContext instead of local state
@@ -23,6 +23,26 @@ export const MusicPlayer: React.FC = () => {
       navigate('/')
     }
   }, [isAuthenticated, navigate])
+
+  // Sync audio element with isPlaying state
+  useEffect(() => {
+    if (!audioRef.current || !currentTrack?.preview_url) return
+    
+    if (isPlaying) {
+      audioRef.current.play().catch(err => {
+        console.error('Failed to play audio:', err)
+      })
+    } else {
+      audioRef.current.pause()
+    }
+  }, [isPlaying, currentTrack?.preview_url])
+
+  // Load new track when currentTrack changes
+  useEffect(() => {
+    if (audioRef.current && currentTrack?.preview_url) {
+      audioRef.current.load()
+    }
+  }, [currentTrack?.preview_url])
 
   useEffect(() => {
     if (audioRef.current) {
