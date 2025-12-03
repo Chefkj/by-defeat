@@ -165,8 +165,8 @@ export const MusicPlayer: React.FC = () => {
           }}
         />
         
-        {/* Main Content Area with Visualizer Background */}
-        <div className="flex-1 relative pt-16">
+        {/* Main Content Area - Fixed height accounting for nav */}
+        <div className="flex-1 relative" style={{ height: 'calc(100vh - 64px)' }}>
           {/* Visualizer - Full background overlay */}
           <div className="absolute inset-0 z-0">
             <AudioVisualizer 
@@ -178,23 +178,23 @@ export const MusicPlayer: React.FC = () => {
           </div>
           
           {/* Player UI - Stacked on top of visualizer */}
-          <div className="relative z-10 h-full flex flex-col">
-            {/* Player Controls Section */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="max-w-3xl w-full">
+          <div className="relative z-10 h-full flex items-center justify-center p-6">
+            {/* Left side - Player Controls */}
+            <div className="flex-1 flex items-center justify-center max-w-2xl">
+              <div className="w-full">
                 {/* Album Art and Track Info */}
-                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl">
+                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
                   <TrackInfo track={currentTrack} theme={theme} />
                   
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <PlayerControls theme={theme} />
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Track List Sidebar - Right Side */}
-            <div className="absolute right-6 top-6 bottom-6 w-80 flex flex-col bg-black/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl">
+            {/* Right side - Track List Sidebar */}
+            <div className="w-80 h-full max-h-[calc(100vh-128px)] flex flex-col bg-black/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl ml-6">
               <div className="p-4 border-b border-white/10">
                 <h3 className="text-lg font-semibold text-white">Tracks</h3>
                 <p className="text-xs text-gray-400 mt-1">{state.playlist.length} songs</p>
