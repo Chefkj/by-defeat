@@ -132,9 +132,11 @@ export const MusicPlayer: React.FC = () => {
   // Fullscreen mode
   if (isFullscreen) {
     return (
-      <div className={`min-h-screen bg-gray-900 text-white theme-${theme} relative`}>
+      <div className="min-h-screen bg-gray-900 text-white relative flex flex-col">
+        {/* Navigation Header */}
         <Navigation />
         
+        {/* Hidden Audio Element */}
         <audio
           ref={audioRef}
           src={currentTrack.preview_url || ''}
@@ -163,43 +165,41 @@ export const MusicPlayer: React.FC = () => {
           }}
         />
         
-        <div className="fixed inset-0 z-0 pt-16">
-          <AudioVisualizer 
-            isPlaying={isPlaying} 
-            theme={theme} 
-            currentTrack={currentTrack} 
-            audioFeatures={audioFeatures || undefined} 
-          />
-        </div>
-        
-        <div className="relative z-10 pt-16 h-screen flex flex-col overflow-hidden">
-          <main className="flex-1 flex gap-6 p-6 overflow-hidden">
-            {/* Main player area */}
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="max-w-xl w-full">
-                <TrackInfo track={currentTrack} theme={theme} />
-                
-                <div className="mt-4">
-                  <PlayerControls theme={theme} />
+        {/* Main Content Area with Visualizer Background */}
+        <div className="flex-1 relative pt-16">
+          {/* Visualizer - Full background overlay */}
+          <div className="absolute inset-0 z-0">
+            <AudioVisualizer 
+              isPlaying={isPlaying} 
+              theme={theme} 
+              currentTrack={currentTrack} 
+              audioFeatures={audioFeatures || undefined} 
+            />
+          </div>
+          
+          {/* Player UI - Stacked on top of visualizer */}
+          <div className="relative z-10 h-full flex flex-col">
+            {/* Player Controls Section */}
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="max-w-3xl w-full">
+                {/* Album Art and Track Info */}
+                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl">
+                  <TrackInfo track={currentTrack} theme={theme} />
+                  
+                  <div className="mt-6">
+                    <PlayerControls theme={theme} />
+                  </div>
                 </div>
-
-                <motion.div
-                  className="mt-4 text-center text-gray-400 text-xs"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6, duration: 0.6 }}
-                >
-                  <p>Experience the dynamic nature of By Defeat</p>
-                </motion.div>
               </div>
             </div>
-
-            {/* Track list sidebar - scrollable */}
-            <div className="w-80 flex flex-col bg-black/30 backdrop-blur-sm rounded-lg overflow-hidden">
+            
+            {/* Track List Sidebar - Right Side */}
+            <div className="absolute right-6 top-6 bottom-6 w-80 flex flex-col bg-black/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl">
               <div className="p-4 border-b border-white/10">
-                <h3 className="text-lg font-semibold text-white">By Defeat Tracks</h3>
+                <h3 className="text-lg font-semibold text-white">Tracks</h3>
+                <p className="text-xs text-gray-400 mt-1">{state.playlist.length} songs</p>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {state.playlist.map((track, index) => (
                   <button
                     key={track.id}
@@ -210,7 +210,7 @@ export const MusicPlayer: React.FC = () => {
                     }}
                     className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
                       state.currentIndex === index 
-                        ? 'bg-blue-600/40 border border-blue-400/50 shadow-lg' 
+                        ? 'bg-white/20 border border-white/30 shadow-lg' 
                         : 'bg-white/5 hover:bg-white/10 border border-transparent'
                     }`}
                   >
@@ -224,12 +224,19 @@ export const MusicPlayer: React.FC = () => {
                         <p className="text-white text-sm font-medium truncate">{track.name}</p>
                         <p className="text-gray-400 text-xs truncate">{track.artist}</p>
                       </div>
+                      {state.currentIndex === index && isPlaying && (
+                        <div className="flex space-x-0.5">
+                          <div className="w-0.5 h-3 bg-white animate-pulse"></div>
+                          <div className="w-0.5 h-4 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-0.5 h-3 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      )}
                     </div>
                   </button>
                 ))}
               </div>
             </div>
-          </main>
+          </div>
         </div>
       </div>
     )
