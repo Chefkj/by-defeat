@@ -63,18 +63,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
           <SkipBack className="h-5 w-5" />
         </Button>
 
-        <Button
-          variant="default"
-          size="icon"
+        <button
           onClick={handlePlayPause}
-          className="h-14 w-14 rounded-full bg-white text-black hover:bg-white/90 hover:scale-105 transition-transform"
+          className="h-14 w-14 rounded-full bg-white text-black hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
         >
           {isPlaying ? (
             <Pause className="h-7 w-7" />
           ) : (
-            <Play className="h-7 w-7" />
+            <Play className="h-7 w-7 ml-0.5" />
           )}
-        </Button>
+        </button>
 
         <Button
           variant="ghost"
