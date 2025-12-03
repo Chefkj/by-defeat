@@ -70,9 +70,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
           className="h-14 w-14 rounded-full bg-white text-black hover:bg-white/90 hover:scale-105 transition-transform"
         >
           {isPlaying ? (
-            <Pause className="h-6 w-6 fill-current" />
+            <Pause className="h-7 w-7" />
           ) : (
-            <Play className="h-6 w-6 fill-current ml-1" />
+            <Play className="h-7 w-7" />
           )}
         </Button>
 
