@@ -132,7 +132,7 @@ export const MusicPlayer: React.FC = () => {
   // Fullscreen mode
   if (isFullscreen) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white relative flex flex-col">
+      <div className="h-screen w-screen bg-gray-900 text-white flex flex-col overflow-hidden">
         {/* Navigation Header */}
         <Navigation />
         
@@ -165,9 +165,9 @@ export const MusicPlayer: React.FC = () => {
           }}
         />
         
-        {/* Main Content Area - Fixed height accounting for nav */}
-        <div className="flex-1 relative" style={{ height: 'calc(100vh - 64px)' }}>
-          {/* Visualizer - Full background overlay */}
+        {/* Main Content Area - Full remaining viewport */}
+        <div className="flex-1 relative w-full overflow-hidden">
+          {/* Visualizer - Full background */}
           <div className="absolute inset-0 z-0">
             <AudioVisualizer 
               isPlaying={isPlaying} 
@@ -177,29 +177,23 @@ export const MusicPlayer: React.FC = () => {
             />
           </div>
           
-          {/* Player UI - Stacked on top of visualizer */}
-          <div className="relative z-10 h-full flex items-center justify-center p-6">
-            {/* Left side - Player Controls */}
-            <div className="flex-1 flex items-center justify-center max-w-xl">
-              <div className="w-full">
-                {/* Album Art and Track Info */}
-                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 shadow-2xl">
-                  <TrackInfo track={currentTrack} theme={theme} />
-                  
-                  <div className="mt-3">
-                    <PlayerControls theme={theme} />
-                  </div>
-                </div>
+          {/* Player UI - Centered with sidebar */}
+          <div className="relative z-10 h-full w-full flex items-center justify-center gap-4 p-4">
+            {/* Player Card */}
+            <div className="bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-2xl" style={{ maxWidth: '400px' }}>
+              <TrackInfo track={currentTrack} theme={theme} />
+              <div className="mt-3">
+                <PlayerControls theme={theme} />
               </div>
             </div>
             
-            {/* Right side - Track List Sidebar */}
-            <div className="w-80 h-full max-h-[calc(100vh-128px)] flex flex-col bg-black/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl ml-6">
-              <div className="p-4 border-b border-white/10">
-                <h3 className="text-lg font-semibold text-white">Tracks</h3>
-                <p className="text-xs text-gray-400 mt-1">{state.playlist.length} songs</p>
+            {/* Track List Sidebar */}
+            <div className="bg-black/40 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl flex flex-col" style={{ width: '320px', maxHeight: 'calc(100vh - 96px)' }}>
+              <div className="p-3 border-b border-white/10">
+                <h3 className="text-base font-semibold text-white">Tracks</h3>
+                <p className="text-xs text-gray-400">{state.playlist.length} songs</p>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
                 {state.playlist.map((track, index) => (
                   <button
                     key={track.id}
@@ -208,27 +202,27 @@ export const MusicPlayer: React.FC = () => {
                         selectTrack(index)
                       }
                     }}
-                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                    className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${
                       state.currentIndex === index 
-                        ? 'bg-white/20 border border-white/30 shadow-lg' 
+                        ? 'bg-white/20 border border-white/30' 
                         : 'bg-white/5 hover:bg-white/10 border border-transparent'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       <img 
                         src={track.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40"%3E%3Crect fill="%23333" width="40" height="40"/%3E%3C/svg%3E'}
                         alt={track.album || 'Album cover'}
-                        className="w-10 h-10 rounded"
+                        className="w-8 h-8 rounded flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">{track.name}</p>
+                        <p className="text-white text-xs font-medium truncate">{track.name}</p>
                         <p className="text-gray-400 text-xs truncate">{track.artist}</p>
                       </div>
                       {state.currentIndex === index && isPlaying && (
-                        <div className="flex space-x-0.5">
-                          <div className="w-0.5 h-3 bg-white animate-pulse"></div>
-                          <div className="w-0.5 h-4 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                          <div className="w-0.5 h-3 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                        <div className="flex space-x-0.5 flex-shrink-0">
+                          <div className="w-0.5 h-2.5 bg-white animate-pulse"></div>
+                          <div className="w-0.5 h-3 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-0.5 h-2.5 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                         </div>
                       )}
                     </div>
