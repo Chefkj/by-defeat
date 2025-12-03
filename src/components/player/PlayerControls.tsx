@@ -1,8 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { usePlayer } from '../../hooks/usePlayer'
-import { Button } from '../ui/button'
-import { Slider } from '../ui/slider'
 import type { ThemeType } from '../../types/spotify'
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react'
 
@@ -22,12 +20,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
     }
   }
 
-  const handleVolumeChange = (value: number[]) => {
-    setVolume(value[0])
+  const handleVolumeChange = (value: number) => {
+    setVolume(value / 100)
   }
 
-  const handleProgressChange = (value: number[]) => {
-    setProgress(value[0])
+  const handleProgressChange = (value: number) => {
+    setProgress(value)
   }
 
   return (
@@ -39,12 +37,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
     >
       {/* Progress bar */}
       <div className="w-full max-w-md">
-        <Slider
-          value={[progress]}
-          onValueChange={handleProgressChange}
+        <input
+          type="range"
+          min={0}
           max={100}
-          step={1}
-          className="w-full"
+          value={progress}
+          onChange={(e) => handleProgressChange(Number(e.target.value))}
+          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>0:00</span>
@@ -54,14 +53,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
 
       {/* Main controls */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={previous}
-          className="h-10 w-10 rounded-full hover:bg-white/10"
+          className="h-10 w-10 rounded-full hover:bg-white/10 transition-all duration-200 flex items-center justify-center focus:outline-none text-white"
         >
           <SkipBack className="h-5 w-5" />
-        </Button>
+        </button>
 
         <button
           onClick={handlePlayPause}
@@ -74,25 +71,25 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
           )}
         </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={next}
-          className="h-10 w-10 rounded-full hover:bg-white/10"
+          className="h-10 w-10 rounded-full hover:bg-white/10 transition-all duration-200 flex items-center justify-center focus:outline-none text-white"
         >
           <SkipForward className="h-5 w-5" />
-        </Button>
+        </button>
       </div>
 
       {/* Volume control */}
       <div className="flex items-center gap-4 w-full max-w-xs">
         <Volume2 className="h-5 w-5 text-gray-400" />
-        <Slider
-          value={[volume * 100]}
-          onValueChange={(value) => handleVolumeChange([value[0] / 100])}
+        <input
+          type="range"
+          min={0}
           max={100}
           step={1}
-          className="w-full"
+          value={volume * 100}
+          onChange={(e) => handleVolumeChange(Number(e.target.value))}
+          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
         />
       </div>
     </motion.div>
