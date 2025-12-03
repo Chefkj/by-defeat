@@ -30,7 +30,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
 
   return (
     <motion.div
-      className="flex flex-col items-center space-y-6"
+      className="flex flex-col items-center space-y-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -43,7 +43,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
           max={100}
           value={progress}
           onChange={(e) => handleProgressChange(Number(e.target.value))}
-          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+          className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>0:00</span>
@@ -52,7 +52,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
       </div>
 
       {/* Main controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button
           onClick={previous}
           className="h-10 w-10 rounded-full hover:bg-white/10 transition-all duration-200 flex items-center justify-center focus:outline-none text-white"
@@ -62,12 +62,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = () => {
 
         <button
           onClick={handlePlayPause}
-          className="h-14 w-14 rounded-full bg-white text-black hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
+          className="h-12 w-12 rounded-full bg-white text-black hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
         >
           {isPlaying ? (
-            <Pause className="h-7 w-7" />
+            <Pause className="h-6 w-6" />
           ) : (
-            <Play className="h-7 w-7 ml-0.5" />
+            <Play className="h-6 w-6 ml-0.5" />
           )}
         </button>
 

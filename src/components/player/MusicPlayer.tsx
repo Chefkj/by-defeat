@@ -180,13 +180,13 @@ export const MusicPlayer: React.FC = () => {
           {/* Player UI - Stacked on top of visualizer */}
           <div className="relative z-10 h-full flex items-center justify-center p-6">
             {/* Left side - Player Controls */}
-            <div className="flex-1 flex items-center justify-center max-w-2xl">
+            <div className="flex-1 flex items-center justify-center max-w-xl">
               <div className="w-full">
                 {/* Album Art and Track Info */}
-                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
+                <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 shadow-2xl">
                   <TrackInfo track={currentTrack} theme={theme} />
                   
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <PlayerControls theme={theme} />
                   </div>
                 </div>
