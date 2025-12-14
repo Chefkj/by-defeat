@@ -335,10 +335,22 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     // Use Web Playback SDK if available
     if (webPlaybackRef.current && deviceIdRef.current) {
       try {
-        // Start playback on the web player device
-        if (state.currentTrack?.uri) {
-          await startPlayback(deviceIdRef.current, [state.currentTrack.uri])
-          console.log('▶️ Playing on Spotify Web Player:', state.currentTrack.name)
+        const track = state.currentTrack
+        if (!track?.uri) return
+        
+        // If track has album context, play from album for better experience
+        if (track.albumObject?.uri && track.trackNumber !== undefined) {
+          await startPlayback(
+            deviceIdRef.current, 
+            undefined, 
+            track.albumObject.uri,
+            { position: track.trackNumber - 1 }  // 0-indexed position
+          )
+          console.log('▶️ Playing from album context:', track.name)
+        } else {
+          // Fallback to individual track
+          await startPlayback(deviceIdRef.current, [track.uri])
+          console.log('▶️ Playing track:', track.name)
         }
       } catch (error) {
         console.error('Failed to start playback:', error)
@@ -427,8 +439,19 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       // Use Web Playback SDK if available
       if (webPlaybackRef.current && deviceIdRef.current && track.uri) {
         try {
-          await startPlayback(deviceIdRef.current, [track.uri])
-          console.log('🎵 Now playing:', track.name)
+          // If track has album context, play from album
+          if (track.albumObject?.uri && track.trackNumber !== undefined) {
+            await startPlayback(
+              deviceIdRef.current, 
+              undefined, 
+              track.albumObject.uri,
+              { position: track.trackNumber - 1 }
+            )
+            console.log('🎵 Playing from album:', track.name)
+          } else {
+            await startPlayback(deviceIdRef.current, [track.uri])
+            console.log('🎵 Now playing:', track.name)
+          }
         } catch (error) {
           console.error('Failed to play selected track:', error)
         }

@@ -8,6 +8,7 @@ export interface SpotifyTrack {
     name: string
     images: Array<{ url: string }>
     id: string
+    uri?: string  // Album URI for context playback
   }
   duration_ms: number
   preview_url: string | null
@@ -19,6 +20,7 @@ export interface SpotifyTrack {
   uri: string
   popularity?: number
   explicit?: boolean
+  trackNumber?: number  // Track position in album for offset
 }
 
 export interface SpotifyArtist {

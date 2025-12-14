@@ -327,18 +327,32 @@ export const getCurrentPlayback = async () => {
 }
 
 // Start/Resume playback
-export const startPlayback = async (deviceId?: string, uris?: string[]) => {
-  const body: Record<string, string | string[]> = {}
-  
+export const startPlayback = async (
+  deviceId?: string, 
+  uris?: string[], 
+  contextUri?: string,
+  offset?: { position?: number; uri?: string }
+) => {
+  const params = new URLSearchParams()
   if (deviceId) {
-    body.device_id = deviceId
+    params.append('device_id', deviceId)
   }
+
+  const body: Record<string, unknown> = {}
   
-  if (uris) {
+  // Use context_uri for playing from album/playlist/artist, or uris for specific tracks
+  if (contextUri) {
+    body.context_uri = contextUri
+    if (offset) {
+      body.offset = offset
+    }
+  } else if (uris) {
     body.uris = uris
   }
   
-  return spotifyApi('/me/player/play', {
+  const url = `/me/player/play${params.toString() ? '?' + params.toString() : ''}`
+  
+  return spotifyApi(url, {
     method: 'PUT',
     body: JSON.stringify(body),
   })
@@ -628,14 +642,15 @@ export const getBandTracks = async (_limit: number = 20): Promise<SpotifyTrack[]
           artist: track.artists[0]?.name || 'By Defeat',
           artists: track.artists,
           album: track.album?.name,
-          albumObject: track.album,
+          albumObject: track.album ? { ...track.album, uri: track.album.uri } : undefined,
           duration_ms: track.duration_ms,
           preview_url: track.preview_url,
           image: track.album?.images?.[0]?.url,
           popularity: track.popularity || 0,
           uri: track.uri,
           external_urls: track.external_urls,
-          explicit: track.explicit || false
+          explicit: track.explicit || false,
+          trackNumber: track.track_number
         }))
       
       if (byDefeatTracks.length > 0) {
