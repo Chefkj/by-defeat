@@ -230,10 +230,11 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       
       // Load By Defeat tracks as the main playlist
       try {
-        const bandTracks = await getBandTracks(20)
-        console.log(`Loaded ${bandTracks.length} By Defeat tracks`)
+        const bandTracks = await getBandTracks()
+        console.log(`Loaded ${bandTracks.length} By Defeat tracks (filtered to exact artist match)`)
         console.log('Sample track preview URLs:', bandTracks.slice(0, 3).map(t => ({ 
           name: t.name, 
+          artist: t.artist,
           hasPreview: !!t.preview_url,
           preview: t.preview_url 
         })))

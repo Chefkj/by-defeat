@@ -606,7 +606,7 @@ export const getByDefeatTracks = async (limit: number = 20): Promise<SpotifyTrac
 }
 
 // Search for tracks by the band with fallback
-export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]> => {
+export const getBandTracks = async (_limit: number = 20): Promise<SpotifyTrack[]> => {
   try {
     // First, search for the artist
     const artistResponse = await spotifyApi(`/search?q=${encodeURIComponent('By Defeat')}&type=artist&limit=1`)
@@ -617,9 +617,12 @@ export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]>
       // Get top tracks first (these have popularity and are most relevant)
       const topTracksResponse = await spotifyApi(`/artists/${artist.id}/top-tracks?market=US`)
       
-      if (topTracksResponse.tracks.length >= limit) {
-        // If we have enough top tracks, just return those
-        return topTracksResponse.tracks.map((track: SpotifyTrackResponse) => ({
+      // Filter to only tracks by "By Defeat" (exact match on artist name)
+      const byDefeatTracks = topTracksResponse.tracks
+        .filter((track: SpotifyTrackResponse) => 
+          track.artists.some(a => a.name.toLowerCase() === 'by defeat')
+        )
+        .map((track: SpotifyTrackResponse) => ({
           id: track.id,
           name: track.name,
           artist: track.artists[0]?.name || 'By Defeat',
@@ -634,14 +637,22 @@ export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]>
           external_urls: track.external_urls,
           explicit: track.explicit || false
         }))
+      
+      if (byDefeatTracks.length > 0) {
+        console.log(`Found ${byDefeatTracks.length} By Defeat tracks from artist top tracks`)
+        return byDefeatTracks
       }
     }
     
-    // If no artist found or not enough top tracks, search broadly
-    const searchResponse = await spotifyApi(`/search?q=artist:"By Defeat"&type=track&limit=${limit}`)
+    // If no artist found or no top tracks, search broadly and filter results
+    const searchResponse = await spotifyApi(`/search?q=artist:"By Defeat"&type=track&limit=50`)
     
     if (searchResponse.tracks.items.length > 0) {
-      return searchResponse.tracks.items
+      const filteredTracks = searchResponse.tracks.items
+        // Filter to only tracks where "By Defeat" is actually the artist
+        .filter((track: SpotifyTrackResponse) => 
+          track.artists.some(a => a.name.toLowerCase() === 'by defeat')
+        )
         .sort((a: SpotifyTrackResponse, b: SpotifyTrackResponse) => (b.popularity || 0) - (a.popularity || 0))
         .map((track: SpotifyTrackResponse) => ({
           id: track.id,
@@ -658,6 +669,9 @@ export const getBandTracks = async (limit: number = 20): Promise<SpotifyTrack[]>
           external_urls: track.external_urls,
           explicit: track.explicit || false
         }))
+      
+      console.log(`Found ${filteredTracks.length} By Defeat tracks after filtering`)
+      return filteredTracks
     }
     
     // Final fallback to default tracks
