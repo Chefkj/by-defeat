@@ -81,15 +81,27 @@ export interface UserProfile {
   email: string
 }
 
+// Full Spotify Audio Features API response
+// https://developer.spotify.com/documentation/web-api/reference/get-audio-features
 export interface AudioFeatures {
-  energy: number
-  valence: number
-  danceability: number
-  acousticness: number
-  instrumentalness: number
-  liveness: number
-  speechiness: number
-  tempo: number
+  acousticness: number        // 0.0 to 1.0 - confidence measure of whether track is acoustic
+  analysis_url: string        // URL to access full audio analysis
+  danceability: number        // 0.0 to 1.0 - how suitable track is for dancing
+  duration_ms: number         // Duration of track in milliseconds
+  energy: number              // 0.0 to 1.0 - perceptual measure of intensity and activity
+  id: string                  // Spotify ID for the track
+  instrumentalness: number    // 0.0 to 1.0 - predicts whether track contains vocals
+  key: number                 // -1 to 11 - key the track is in (Pitch Class notation)
+  liveness: number            // 0.0 to 1.0 - presence of audience in recording
+  loudness: number            // -60 to 0 dB - overall loudness in decibels
+  mode: number                // 0 or 1 - modality (0 = minor, 1 = major)
+  speechiness: number         // 0.0 to 1.0 - presence of spoken words
+  tempo: number               // BPM - overall estimated tempo
+  time_signature: number      // 3 to 7 - estimated time signature
+  track_href: string          // Spotify API link to full track object
+  type: string                // "audio_features"
+  uri: string                 // Spotify URI for track
+  valence: number             // 0.0 to 1.0 - musical positiveness (happy vs sad)
 }
 
 export type ThemeType = 'default' | 'energetic' | 'mellow' | 'dark' | 'bright'

@@ -157,19 +157,41 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const loadAudioFeatures = React.useCallback(async (trackId: string) => {
     if (!spotifyServiceRef.current) return
     
-    // Just use mock audio features - Spotify API often denies access to audio features
-    // even for authenticated users (403 Forbidden is common for this endpoint)
-    const mockAudioFeatures: AudioFeatures = {
-      energy: 0.5 + Math.random() * 0.5,
-      valence: 0.3 + Math.random() * 0.7,
-      danceability: 0.4 + Math.random() * 0.6,
-      acousticness: Math.random() * 0.8,
-      instrumentalness: Math.random() * 0.5,
-      liveness: Math.random() * 0.4,
-      speechiness: Math.random() * 0.3,
-      tempo: 80 + Math.random() * 120,
+    try {
+      // Try to get real audio features from Spotify API
+      const audioFeatures = await spotifyServiceRef.current.getAudioFeatures(trackId)
+      dispatch({ type: 'SET_AUDIO_FEATURES', payload: audioFeatures })
+      console.log('✅ Loaded audio features for track:', trackId)
+    } catch (error) {
+      // Silently fall back to mock features if API fails (403 is common for some tracks)
+      const errorMessage = error instanceof Error ? error.message : ''
+      if (!errorMessage.includes('403')) {
+        console.warn('Audio features unavailable, using mock data:', errorMessage)
+      }
+      
+      // Generate mock audio features that match the full API structure
+      const mockAudioFeatures: AudioFeatures = {
+        acousticness: Math.random() * 0.8,
+        analysis_url: '',
+        danceability: 0.4 + Math.random() * 0.6,
+        duration_ms: 0,
+        energy: 0.5 + Math.random() * 0.5,
+        id: trackId,
+        instrumentalness: Math.random() * 0.5,
+        key: Math.floor(Math.random() * 12),
+        liveness: Math.random() * 0.4,
+        loudness: -60 + Math.random() * 50,
+        mode: Math.random() > 0.5 ? 1 : 0,
+        speechiness: Math.random() * 0.3,
+        tempo: 80 + Math.random() * 120,
+        time_signature: 4,
+        track_href: '',
+        type: 'audio_features',
+        uri: `spotify:track:${trackId}`,
+        valence: 0.3 + Math.random() * 0.7,
+      }
+      dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
     }
-    dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
   }, [])
 
   // Initialize first track
