@@ -395,6 +395,7 @@ interface SpotifyTrackResponse {
   popularity: number
   uri: string
   explicit: boolean
+  track_number?: number
 }
 
 interface SpotifySearchResponse {
@@ -642,7 +643,7 @@ export const getBandTracks = async (_limit: number = 20): Promise<SpotifyTrack[]
           artist: track.artists[0]?.name || 'By Defeat',
           artists: track.artists,
           album: track.album?.name,
-          albumObject: track.album ? { ...track.album, uri: track.album.uri } : undefined,
+          albumObject: track.album,
           duration_ms: track.duration_ms,
           preview_url: track.preview_url,
           image: track.album?.images?.[0]?.url,
