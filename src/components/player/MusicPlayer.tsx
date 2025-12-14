@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { usePlayer } from '../../contexts/PlayerContext'
+import { usePlayer } from '../../hooks/usePlayerContext'
 import { Navigation } from '../Navigation'
 import { PlayerControls } from './PlayerControls'
 import { TrackInfo } from './TrackInfo'

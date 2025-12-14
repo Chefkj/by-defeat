@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { usePlayer } from '../contexts/PlayerContext'
+import { usePlayer } from '../hooks/usePlayerContext'
 import { Home, Music, Info, LogOut } from 'lucide-react'
 
 export const Navigation = () => {

@@ -4,17 +4,29 @@
 // Extend Window interface to include Spotify
 declare global {
   interface Window {
-    Spotify: typeof Spotify
+    Spotify: {
+      Player: Spotify.PlayerConstructor
+    }
     onSpotifyWebPlaybackSDKReady: () => void
   }
 }
 
 namespace Spotify {
+  export interface ErrorEvent {
+    message: string
+  }
+
+  export interface ReadyEvent {
+    device_id: string
+  }
+
+  export type PlayerEvent = PlaybackState | ErrorEvent | ReadyEvent
+
   export interface Player {
     connect(): Promise<boolean>
     disconnect(): void
-    addListener(event: string, callback: (data: any) => void): void
-    removeListener(event: string, callback?: (data: any) => void): void
+    addListener(event: string, callback: (data: PlayerEvent) => void): void
+    removeListener(event: string, callback?: (data: PlayerEvent) => void): void
     getCurrentState(): Promise<PlaybackState | null>
     setName(name: string): Promise<void>
     getVolume(): Promise<number>
@@ -31,7 +43,7 @@ namespace Spotify {
   export interface PlaybackState {
     context: {
       uri: string
-      metadata: any
+      metadata: Record<string, unknown>
     }
     disallows: {
       pausing: boolean
@@ -137,6 +149,10 @@ export class WebPlaybackService {
     this.setupListeners()
 
     // Connect to the player
+    if (!this.player) {
+      throw new Error('Player not initialized')
+    }
+    
     const success = await this.player.connect()
     
     if (!success) {
@@ -150,21 +166,24 @@ export class WebPlaybackService {
     if (!this.player) return
 
     // Ready
-    this.player.addListener('ready', ({ device_id }: { device_id: string }) => {
+    this.player.addListener('ready', (data: Spotify.PlayerEvent) => {
+      const { device_id } = data as Spotify.ReadyEvent
       console.log('🎵 Spotify player ready with Device ID:', device_id)
       this.deviceId = device_id
       this.notifyStateChange()
     })
 
     // Not Ready
-    this.player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+    this.player.addListener('not_ready', (data: Spotify.PlayerEvent) => {
+      const { device_id } = data as Spotify.ReadyEvent
       console.warn('Spotify player not ready:', device_id)
       this.deviceId = null
       this.notifyStateChange()
     })
 
     // Player state changed
-    this.player.addListener('player_state_changed', (state: Spotify.PlaybackState | null) => {
+    this.player.addListener('player_state_changed', (data: Spotify.PlayerEvent) => {
+      const state = data as Spotify.PlaybackState | null
       if (!state) {
         console.log('Player state: null (no active playback)')
         return
@@ -180,19 +199,23 @@ export class WebPlaybackService {
     })
 
     // Errors
-    this.player.addListener('initialization_error', ({ message }: { message: string }) => {
+    this.player.addListener('initialization_error', (data: Spotify.PlayerEvent) => {
+      const { message } = data as Spotify.ErrorEvent
       console.error('Spotify player initialization error:', message)
     })
 
-    this.player.addListener('authentication_error', ({ message }: { message: string }) => {
+    this.player.addListener('authentication_error', (data: Spotify.PlayerEvent) => {
+      const { message } = data as Spotify.ErrorEvent
       console.error('Spotify player authentication error:', message)
     })
 
-    this.player.addListener('account_error', ({ message }: { message: string }) => {
+    this.player.addListener('account_error', (data: Spotify.PlayerEvent) => {
+      const { message } = data as Spotify.ErrorEvent
       console.error('Spotify player account error:', message)
     })
 
-    this.player.addListener('playback_error', ({ message }: { message: string }) => {
+    this.player.addListener('playback_error', (data: Spotify.PlayerEvent) => {
+      const { message } = data as Spotify.ErrorEvent
       console.error('Spotify player playback error:', message)
     })
   }

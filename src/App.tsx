@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { PlayerProvider, usePlayer } from './contexts/PlayerContext'
+import { PlayerProvider } from './contexts/PlayerContext'
+import { usePlayer } from './hooks/usePlayerContext'
 import { MusicPlayer } from './components/player/MusicPlayer'
 import { VisualizerDemo } from './components/player/VisualizerDemo'
 import { Navigation } from './components/Navigation'
