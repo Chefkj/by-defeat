@@ -7,8 +7,10 @@ import {
   getCurrentPlayback,
   getAccessToken,
   getBandTracks,
-  SpotifyService
+  SpotifyService,
+  startPlayback
 } from '../services/spotify'
+import { WebPlaybackService, type WebPlaybackState } from '../services/webPlayback'
 
 // Add user profile type
 export interface UserProfile {
@@ -145,12 +147,57 @@ interface PlayerProviderProps {
 export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(playerReducer, initialState)
   const spotifyServiceRef = React.useRef<SpotifyService | null>(null)
+  const webPlaybackRef = React.useRef<WebPlaybackService | null>(null)
+  const deviceIdRef = React.useRef<string | null>(null)
   const isLoadingUserData = React.useRef(false)
 
   // Initialize Spotify service when authenticated
   useEffect(() => {
     if (state.isAuthenticated && state.accessToken) {
       spotifyServiceRef.current = new SpotifyService(state.accessToken)
+      
+      // Initialize Web Playback SDK
+      if (!webPlaybackRef.current) {
+        console.log('🎵 Initializing Spotify Web Playback SDK...')
+        webPlaybackRef.current = new WebPlaybackService(
+          getAccessToken,
+          (playbackState: WebPlaybackState) => {
+            // Handle playback state changes
+            if (playbackState.deviceId && !deviceIdRef.current) {
+              deviceIdRef.current = playbackState.deviceId
+              console.log('✅ Spotify player ready! Device ID:', playbackState.deviceId)
+            }
+            
+            // Update playing state
+            dispatch({ type: 'SET_PLAYING', payload: !playbackState.paused })
+            
+            // Update progress
+            if (playbackState.position) {
+              dispatch({ type: 'SET_PROGRESS', payload: playbackState.position })
+            }
+          }
+        )
+        
+        webPlaybackRef.current.initialize()
+          .then((deviceId) => {
+            if (deviceId) {
+              deviceIdRef.current = deviceId
+              console.log('✅ Web Playback SDK initialized with device ID:', deviceId)
+            }
+          })
+          .catch((error) => {
+            console.error('Failed to initialize Web Playback SDK:', error)
+          })
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (webPlaybackRef.current && !state.isAuthenticated) {
+        webPlaybackRef.current.disconnect()
+        webPlaybackRef.current = null
+        deviceIdRef.current = null
+      }
     }
   }, [state.isAuthenticated, state.accessToken])
 
@@ -328,23 +375,84 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     }
   }, [state.isAuthenticated, state.accessToken, loadUserData])
 
-  const play = () => {
+  const play = async () => {
     dispatch({ type: 'SET_PLAYING', payload: true })
+    
+    // Use Web Playback SDK if available
+    if (webPlaybackRef.current && deviceIdRef.current) {
+      try {
+        // Start playback on the web player device
+        if (state.currentTrack?.uri) {
+          await startPlayback(deviceIdRef.current, [state.currentTrack.uri])
+          console.log('▶️ Playing on Spotify Web Player:', state.currentTrack.name)
+        }
+      } catch (error) {
+        console.error('Failed to start playback:', error)
+      }
+    }
   }
 
-  const pause = () => {
+  const pause = async () => {
     dispatch({ type: 'SET_PLAYING', payload: false })
+    
+    // Use Web Playback SDK if available
+    if (webPlaybackRef.current) {
+      try {
+        await webPlaybackRef.current.pause()
+        console.log('⏸️ Paused playback')
+      } catch (error) {
+        console.error('Failed to pause playback:', error)
+      }
+    }
   }
-  const next = () => {
+  
+  const next = async () => {
     dispatch({ type: 'NEXT_TRACK' })
+    
+    // Use Web Playback SDK if available
+    if (webPlaybackRef.current && deviceIdRef.current) {
+      const nextIndex = (state.currentIndex + 1) % state.playlist.length
+      const nextTrack = state.playlist[nextIndex]
+      if (nextTrack?.uri) {
+        try {
+          await startPlayback(deviceIdRef.current, [nextTrack.uri])
+          console.log('⏭️ Next track:', nextTrack.name)
+        } catch (error) {
+          console.error('Failed to skip to next:', error)
+        }
+      }
+    }
   }
 
-  const previous = () => {
+  const previous = async () => {
     dispatch({ type: 'PREVIOUS_TRACK' })
+    
+    // Use Web Playback SDK if available
+    if (webPlaybackRef.current && deviceIdRef.current) {
+      const prevIndex = state.currentIndex === 0 ? state.playlist.length - 1 : state.currentIndex - 1
+      const prevTrack = state.playlist[prevIndex]
+      if (prevTrack?.uri) {
+        try {
+          await startPlayback(deviceIdRef.current, [prevTrack.uri])
+          console.log('⏮️ Previous track:', prevTrack.name)
+        } catch (error) {
+          console.error('Failed to skip to previous:', error)
+        }
+      }
+    }
   }
 
-  const setVolume = (volume: number) => {
+  const setVolume = async (volume: number) => {
     dispatch({ type: 'SET_VOLUME', payload: volume })
+    
+    // Use Web Playback SDK if available
+    if (webPlaybackRef.current) {
+      try {
+        await webPlaybackRef.current.setVolume(volume)
+      } catch (error) {
+        console.error('Failed to set volume:', error)
+      }
+    }
   }
 
   const setProgress = (progress: number) => {
@@ -355,11 +463,22 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
   }
 
-  const selectTrack = (index: number) => {
+  const selectTrack = async (index: number) => {
     if (index >= 0 && index < state.playlist.length) {
+      const track = state.playlist[index]
       dispatch({ type: 'SET_CURRENT_INDEX', payload: index })
-      dispatch({ type: 'SET_CURRENT_TRACK', payload: state.playlist[index] })
+      dispatch({ type: 'SET_CURRENT_TRACK', payload: track })
       dispatch({ type: 'SET_PLAYING', payload: true })
+      
+      // Use Web Playback SDK if available
+      if (webPlaybackRef.current && deviceIdRef.current && track.uri) {
+        try {
+          await startPlayback(deviceIdRef.current, [track.uri])
+          console.log('🎵 Now playing:', track.name)
+        } catch (error) {
+          console.error('Failed to play selected track:', error)
+        }
+      }
     }
   }
 

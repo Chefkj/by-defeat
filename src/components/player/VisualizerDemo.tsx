@@ -14,6 +14,16 @@ export const VisualizerDemo: React.FC = () => {
     liveness: 0.2,
     speechiness: 0.1,
     tempo: 128,
+    analysis_url: '',
+    duration_ms: 180000,
+    id: 'demo-features',
+    key: 0,
+    loudness: -5,
+    mode: 1,
+    time_signature: 4,
+    track_href: '',
+    type: 'audio_features',
+    uri: 'spotify:track:demo'
   })
 
   // Simulate changing audio features
