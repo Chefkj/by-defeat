@@ -162,7 +162,11 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
       const audioFeatures = await spotifyServiceRef.current.getAudioFeatures(trackId)
       dispatch({ type: 'SET_AUDIO_FEATURES', payload: audioFeatures })
     } catch (error) {
-      console.error('Failed to load audio features:', error)
+      // Silently handle 403 errors (common for tracks without audio analysis)
+      const errorMessage = error instanceof Error ? error.message : ''
+      if (!errorMessage.includes('403')) {
+        console.warn('Audio features unavailable:', errorMessage)
+      }
       // Don't set error for audio features - it's not critical
       // Create mock audio features for demo purposes
       const mockAudioFeatures: AudioFeatures = {

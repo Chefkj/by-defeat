@@ -207,7 +207,8 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
         {/* Energy bars - spectrum analyzer style */}
         {[...Array(16)].map((_, i) => {
           const x = 100 + i * 50
-          const height = 100 + Math.sin(time * 4 + i * 0.5) * energy * 150 + beatPulse * 100
+          const rawHeight = 100 + Math.sin(time * 4 + i * 0.5) * energy * 150 + beatPulse * 100
+          const height = Math.max(10, rawHeight) // Ensure height is always positive
           
           return (
             <motion.rect
