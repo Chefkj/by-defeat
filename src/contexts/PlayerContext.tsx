@@ -336,7 +336,11 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     if (webPlaybackRef.current && deviceIdRef.current) {
       try {
         const track = state.currentTrack
-        if (!track?.uri) return
+        if (!track?.uri) {
+          console.warn('No track URI available for playback')
+          dispatch({ type: 'SET_PLAYING', payload: false })
+          return
+        }
         
         // If track has album context, play from album for better experience
         if (track.albumObject?.uri && track.trackNumber !== undefined) {
@@ -354,6 +358,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Failed to start playback:', error)
+        dispatch({ type: 'SET_PLAYING', payload: false })
       }
     }
   }
@@ -364,10 +369,19 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     // Use Web Playback SDK if available
     if (webPlaybackRef.current) {
       try {
-        await webPlaybackRef.current.pause()
-        console.log('⏸️ Paused playback')
+        const currentState = await webPlaybackRef.current.getCurrentState()
+        if (currentState) {
+          await webPlaybackRef.current.pause()
+          console.log('⏸️ Paused playback')
+        } else {
+          console.log('⏸️ No active playback to pause')
+        }
       } catch (error) {
-        console.error('Failed to pause playback:', error)
+        // Silently handle "no list loaded" errors
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        if (!errorMessage.includes('no list was loaded')) {
+          console.error('Failed to pause playback:', error)
+        }
       }
     }
   }
