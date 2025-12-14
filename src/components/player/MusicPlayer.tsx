@@ -182,6 +182,11 @@ export const MusicPlayer: React.FC = () => {
             {/* Player Card */}
             <div className="bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-2xl" style={{ maxWidth: '400px' }}>
               <TrackInfo track={currentTrack} theme={theme} />
+              {!currentTrack?.preview_url && (
+                <div className="mt-2 p-2 bg-yellow-900/50 border border-yellow-600/50 rounded text-xs text-yellow-200">
+                  ⚠️ No preview available for this track
+                </div>
+              )}
               <div className="mt-3">
                 <PlayerControls theme={theme} />
               </div>

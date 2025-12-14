@@ -237,6 +237,10 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
         dispatch({ type: 'SET_CURRENT_TRACK', payload: bandTracks[0] })
         dispatch({ type: 'SET_CURRENT_INDEX', payload: 0 })
         
+        // Log preview availability summary
+        const tracksWithPreviews = bandTracks.filter(t => t.preview_url).length
+        console.log(`🎵 Preview availability: ${tracksWithPreviews}/${bandTracks.length} tracks have playable previews`)
+        
       } catch (tracksError) {
         console.error('Failed to load By Defeat tracks:', tracksError)
         // Fallback to default tracks if API call fails
