@@ -157,30 +157,19 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const loadAudioFeatures = React.useCallback(async (trackId: string) => {
     if (!spotifyServiceRef.current) return
     
-    try {
-      dispatch({ type: 'SET_ERROR', payload: null })
-      const audioFeatures = await spotifyServiceRef.current.getAudioFeatures(trackId)
-      dispatch({ type: 'SET_AUDIO_FEATURES', payload: audioFeatures })
-    } catch (error) {
-      // Silently handle 403 errors (common for tracks without audio analysis)
-      const errorMessage = error instanceof Error ? error.message : ''
-      if (!errorMessage.includes('403')) {
-        console.warn('Audio features unavailable:', errorMessage)
-      }
-      // Don't set error for audio features - it's not critical
-      // Create mock audio features for demo purposes
-      const mockAudioFeatures: AudioFeatures = {
-        energy: 0.5 + Math.random() * 0.5,
-        valence: 0.3 + Math.random() * 0.7,
-        danceability: 0.4 + Math.random() * 0.6,
-        acousticness: Math.random() * 0.8,
-        instrumentalness: Math.random() * 0.5,
-        liveness: Math.random() * 0.4,
-        speechiness: Math.random() * 0.3,
-        tempo: 80 + Math.random() * 120,
-      }
-      dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
+    // Just use mock audio features - Spotify API often denies access to audio features
+    // even for authenticated users (403 Forbidden is common for this endpoint)
+    const mockAudioFeatures: AudioFeatures = {
+      energy: 0.5 + Math.random() * 0.5,
+      valence: 0.3 + Math.random() * 0.7,
+      danceability: 0.4 + Math.random() * 0.6,
+      acousticness: Math.random() * 0.8,
+      instrumentalness: Math.random() * 0.5,
+      liveness: Math.random() * 0.4,
+      speechiness: Math.random() * 0.3,
+      tempo: 80 + Math.random() * 120,
     }
+    dispatch({ type: 'SET_AUDIO_FEATURES', payload: mockAudioFeatures })
   }, [])
 
   // Initialize first track

@@ -454,7 +454,13 @@ export class SpotifyService {
   }
 
   async getAudioFeatures(trackId: string): Promise<AudioFeatures> {
-    return this.makeRequest<AudioFeatures>(`/audio-features/${trackId}`)
+    try {
+      return await this.makeRequest<AudioFeatures>(`/audio-features/${trackId}`)
+    } catch (error) {
+      // Re-throw the error so the caller can handle it
+      // but don't log it here since 403s are common
+      throw error
+    }
   }
 
   async searchTracks(query: string, limit: number = 10): Promise<SpotifyTrack[]> {
