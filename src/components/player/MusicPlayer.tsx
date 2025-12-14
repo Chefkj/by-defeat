@@ -27,29 +27,27 @@ export const MusicPlayer: React.FC = () => {
 
   // Sync audio element with isPlaying state
   useEffect(() => {
+    // Only use audio element if track has a preview URL
+    // Otherwise, Web Playback SDK handles full track playback
     if (!audioRef.current || !currentTrack?.preview_url) {
-      console.log('Cannot play:', { 
-        hasAudioRef: !!audioRef.current, 
-        hasTrack: !!currentTrack,
-        hasPreviewUrl: !!currentTrack?.preview_url,
-        previewUrl: currentTrack?.preview_url
-      })
+      if (currentTrack && !currentTrack.preview_url) {
+        console.log(`Track "${currentTrack.name}" will play via Spotify Web Playback SDK (full track)`)
+      }
       return
     }
     
     if (isPlaying) {
-      console.log('Attempting to play:', currentTrack.name)
+      console.log('Playing preview:', currentTrack.name)
       const playPromise = audioRef.current.play()
       
       if (playPromise !== undefined) {
         playPromise.catch(err => {
-          console.error('Failed to play audio:', err)
+          console.error('Failed to play audio preview:', err)
           // If autoplay fails, pause the player state
           pause()
         })
       }
     } else {
-      console.log('Pausing audio')
       audioRef.current.pause()
     }
   }, [isPlaying, currentTrack?.preview_url, currentTrack, pause])
@@ -182,9 +180,14 @@ export const MusicPlayer: React.FC = () => {
             {/* Player Card */}
             <div className="bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-2xl" style={{ maxWidth: '400px' }}>
               <TrackInfo track={currentTrack} theme={theme} />
-              {!currentTrack?.preview_url && (
-                <div className="mt-2 p-2 bg-yellow-900/50 border border-yellow-600/50 rounded text-xs text-yellow-200">
-                  ⚠️ No preview available for this track
+              {!currentTrack?.preview_url && currentTrack?.uri && (
+                <div className="mt-2 p-2 bg-blue-900/50 border border-blue-600/50 rounded text-xs text-blue-200">
+                  🎵 Playing full track via Spotify Web Player
+                </div>
+              )}
+              {!currentTrack?.preview_url && !currentTrack?.uri && (
+                <div className="mt-2 p-2 bg-red-900/50 border border-red-600/50 rounded text-xs text-red-200">
+                  ⚠️ This track is not available for playback
                 </div>
               )}
               <div className="mt-3">
